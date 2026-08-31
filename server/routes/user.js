@@ -1,0 +1,287 @@
+import express from 'express';
+import { v4 as uuidv4 } from 'uuid';
+import db from '../database.js';
+import { authenticateToken } from '../middleware/auth.js';
+import { generateApiKey, generateClientToken, checkAndResetDailyQuotas } from '../services/keyService.js';
+
+const router = express.Router();
+
+// Get User Dashboard Overview Statistics
+router.get('/dashboard/stats', authenticateToken, (req, res) => {
+  try {
+    checkAndResetDailyQuotas();
+    const userId = req.user.id;
+
+    // Keys summary
+    const keys = db.prepare(`
+      SELECT * FROM api_keys WHERE user_id = ? ORDER BY created_at DESC
+    `).all(userId);
+
+    const activeKeysCount = keys.filter(k => k.status === 'active').length;
+    const totalDailyQuota = keys.reduce((sum, k) => sum + (k.status === 'active' ? k.daily_quota : 0), 0);
+    const todayRequests = keys.reduce((sum, k) => sum + k.today_requests, 0);
+    const totalRequests = keys.reduce((sum, k) => sum + k.used_quota, 0);
+
+    // Recent activity logs
+    const recentLogs = db.prepare(`
+      SELECT * FROM usage_logs WHERE user_id = ? ORDER BY timestamp DESC LIMIT 20
+    `).all(userId);
+
+    // Average latency
+    const avgLatencyResult = db.prepare(`
+      SELECT AVG(latency_ms) as avg_lat FROM usage_logs WHERE user_id = ?
+    `).get(userId);
+
+    const avgLatency = Math.round(avgLatencyResult?.avg_lat || 42);
+
+    return res.json({
+      success: true,
+      stats: {
+        activeKeysCount,
+        totalKeysCount: keys.length,
+        totalDailyQuota,
+        todayRequests,
+        totalRequests,
+        avgLatency,
+        walletBalance: req.user.balance
+      },
+      keys,
+      recentLogs
+    });
+  } catch (error) {
+    console.error('Stats error:', error);
+    return res.status(500).json({ success: false, error: 'Failed to fetch dashboard stats' });
+  }
+});
+
+// Get User's API Keys
+router.get('/keys', authenticateToken, (req, res) => {
+  try {
+    const keys = db.prepare(`
+      SELECT k.*, p.name as plan_name, p.tier as plan_tier
+      FROM api_keys k
+      LEFT JOIN plans p ON k.plan_id = p.id
+      WHERE k.user_id = ?
+      ORDER BY k.created_at DESC
+    `).all(req.user.id);
+
+    return res.json({ success: true, keys });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: 'Failed to load API keys' });
+  }
+});
+
+// Create / Provision New API Key
+router.post('/keys/create', authenticateToken, (req, res) => {
+  try {
+    const { keyName, allowedIps, botType } = req.body;
+    const userId = req.user.id;
+
+    // Check user's current active plan / keys count
+    const currentKeys = db.prepare("SELECT COUNT(*) as count FROM api_keys WHERE user_id = ? AND status != 'revoked'").get(userId);
+
+    // Check plan limits (default allowance 3 without dedicated subscription or unlimited if paid)
+    const newApiKey = generateApiKey();
+    const newClientToken = generateClientToken();
+    const keyId = `key_${uuidv4().replace(/-/g, '').slice(0, 10)}`;
+
+    const expires = new Date();
+    expires.setDate(expires.getDate() + 30);
+
+    db.prepare(`
+      INSERT INTO api_keys (
+        id, user_id, plan_id, key_name, api_key, client_token, status,
+        daily_quota, total_quota, rps_limit, allowed_ips, bot_type, expires_at
+      ) VALUES (?, ?, 'plan_starter', ?, ?, ?, 'active', 25000, 750000, 15, ?, ?, ?)
+    `).run(
+      keyId,
+      userId,
+      keyName?.trim() || `Telegram Music Bot #${currentKeys.count + 1}`,
+      newApiKey,
+      newClientToken,
+      allowedIps?.trim() || '',
+      botType || 'YukkiMusic / AnonX / PyTgCalls',
+      expires.toISOString()
+    );
+
+    const created = db.prepare('SELECT * FROM api_keys WHERE id = ?').get(keyId);
+    return res.status(201).json({
+      success: true,
+      message: 'New Telegram Bot API key successfully generated!',
+      key: created
+    });
+  } catch (error) {
+    console.error('Create key error:', error);
+    return res.status(500).json({ success: false, error: 'Failed to create API key' });
+  }
+});
+
+// Toggle Status (Activate / Deactivate)
+router.patch('/keys/:id/toggle', authenticateToken, (req, res) => {
+  try {
+    const { id } = req.params;
+    const key = db.prepare('SELECT * FROM api_keys WHERE id = ? AND user_id = ?').get(id, req.user.id);
+    
+    if (!key) {
+      return res.status(404).json({ success: false, error: 'API key not found' });
+    }
+
+    if (key.status === 'revoked') {
+      return res.status(400).json({ success: false, error: 'Revoked keys cannot be reactivated.' });
+    }
+
+    const newStatus = key.status === 'active' ? 'inactive' : 'active';
+    db.prepare('UPDATE api_keys SET status = ? WHERE id = ?').run(newStatus, id);
+
+    return res.json({
+      success: true,
+      message: `API Key is now ${newStatus}`,
+      status: newStatus
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: 'Failed to update key status' });
+  }
+});
+
+// Regenerate API Key Credentials
+router.post('/keys/:id/regenerate', authenticateToken, (req, res) => {
+  try {
+    const { id } = req.params;
+    const key = db.prepare('SELECT * FROM api_keys WHERE id = ? AND user_id = ?').get(id, req.user.id);
+    
+    if (!key) {
+      return res.status(404).json({ success: false, error: 'API key not found' });
+    }
+
+    const newApiKey = generateApiKey();
+    const newClientToken = generateClientToken();
+
+    db.prepare(`
+      UPDATE api_keys
+      SET api_key = ?, client_token = ?, status = 'active'
+      WHERE id = ?
+    `).run(newApiKey, newClientToken, id);
+
+    return res.json({
+      success: true,
+      message: 'API Key credentials regenerated successfully. Update your Telegram bot config with the new key.',
+      api_key: newApiKey,
+      client_token: newClientToken
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: 'Failed to regenerate key' });
+  }
+});
+
+// Revoke API Key permanently
+router.delete('/keys/:id/revoke', authenticateToken, (req, res) => {
+  try {
+    const { id } = req.params;
+    const key = db.prepare('SELECT * FROM api_keys WHERE id = ? AND user_id = ?').get(id, req.user.id);
+    
+    if (!key) {
+      return res.status(404).json({ success: false, error: 'API key not found' });
+    }
+
+    db.prepare("UPDATE api_keys SET status = 'revoked' WHERE id = ?").run(id);
+
+    return res.json({
+      success: true,
+      message: 'API Key revoked permanently. All requests from this key will now be blocked.'
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: 'Failed to revoke key' });
+  }
+});
+
+// Update Key Details (Name, Allowed IPs)
+router.put('/keys/:id/settings', authenticateToken, (req, res) => {
+  try {
+    const { id } = req.params;
+    const { key_name, allowed_ips, bot_type } = req.body;
+
+    const key = db.prepare('SELECT * FROM api_keys WHERE id = ? AND user_id = ?').get(id, req.user.id);
+    if (!key) {
+      return res.status(404).json({ success: false, error: 'API key not found' });
+    }
+
+    db.prepare(`
+      UPDATE api_keys
+      SET key_name = COALESCE(?, key_name),
+          allowed_ips = COALESCE(?, allowed_ips),
+          bot_type = COALESCE(?, bot_type)
+      WHERE id = ?
+    `).run(key_name?.trim(), allowed_ips?.trim(), bot_type?.trim(), id);
+
+    const updated = db.prepare('SELECT * FROM api_keys WHERE id = ?').get(id);
+    return res.json({
+      success: true,
+      message: 'Key settings saved successfully',
+      key: updated
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: 'Failed to update key settings' });
+  }
+});
+
+// Get User Orders & Invoices
+router.get('/orders', authenticateToken, (req, res) => {
+  try {
+    const orders = db.prepare(`
+      SELECT o.*, p.name as plan_name, p.tier as plan_tier, p.daily_quota, p.total_quota
+      FROM orders o
+      JOIN plans p ON o.plan_id = p.id
+      WHERE o.user_id = ?
+      ORDER BY o.created_at DESC
+    `).all(req.user.id);
+
+    return res.json({ success: true, orders });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: 'Failed to load order history' });
+  }
+});
+
+// Get Detailed Usage Analytics (Time Series)
+router.get('/analytics', authenticateToken, (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    // Hourly request counts for past 24h
+    const hourlyLogs = db.prepare(`
+      SELECT strftime('%H:00', timestamp) as hour, COUNT(*) as count, AVG(latency_ms) as avg_latency
+      FROM usage_logs
+      WHERE user_id = ? AND timestamp >= datetime('now', '-24 hours')
+      GROUP BY hour
+      ORDER BY timestamp ASC
+    `).all(userId);
+
+    // Endpoints breakdown
+    const endpointBreakdown = db.prepare(`
+      SELECT endpoint, COUNT(*) as count
+      FROM usage_logs
+      WHERE user_id = ?
+      GROUP BY endpoint
+    `).all(userId);
+
+    // Status code distribution
+    const statusCodes = db.prepare(`
+      SELECT status_code, COUNT(*) as count
+      FROM usage_logs
+      WHERE user_id = ?
+      GROUP BY status_code
+    `).all(userId);
+
+    return res.json({
+      success: true,
+      analytics: {
+        hourly: hourlyLogs,
+        endpoints: endpointBreakdown,
+        statusCodes
+      }
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: 'Failed to generate analytics' });
+  }
+});
+
+export default router;

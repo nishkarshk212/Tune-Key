@@ -1,0 +1,215 @@
+import React, { useState } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
+import { Key, Lock, Mail, User, ArrowRight, Eye, EyeOff, AlertCircle, Sun, Moon } from 'lucide-react';
+
+export default function Register() {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [agreeTerms, setAgreeTerms] = useState(true);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const { register, loginWithGoogle } = useAuth();
+  const { isDark, toggleTheme } = useTheme();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const plan = searchParams.get('plan');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!agreeTerms) {
+      setError('Please agree to the terms of service.');
+      return;
+    }
+
+    setError('');
+    setLoading(true);
+
+    try {
+      await register(name, email, password);
+      navigate(plan ? `/dashboard/plans?selected=${plan}` : '/dashboard', { replace: true });
+    } catch (err) {
+      setError(err.response?.data?.error || err.message || 'Registration failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleAuth = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      await loginWithGoogle({
+        email: 'nishkarsh.dev@gmail.com',
+        name: 'Nishkarsh',
+        avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80'
+      });
+      navigate('/dashboard', { replace: true });
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50 dark:bg-[#08090D] text-slate-900 dark:text-slate-100 flex items-center justify-center px-4 py-12 relative overflow-hidden transition-colors duration-300">
+      
+      {/* Theme Toggle in top right */}
+      <button
+        onClick={toggleTheme}
+        className="absolute top-6 right-6 p-2 rounded-xl text-slate-500 hover:bg-slate-200 dark:hover:bg-white/[0.05] transition-colors"
+      >
+        {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-700" />}
+      </button>
+
+      {/* Ambient Glows */}
+      <div className="absolute top-1/4 left-1/3 w-96 h-96 bg-purple-600/10 blur-[130px] rounded-full pointer-events-none"></div>
+      <div className="absolute bottom-1/4 right-1/3 w-96 h-96 bg-indigo-600/10 blur-[130px] rounded-full pointer-events-none"></div>
+
+      <div className="w-full max-w-md relative z-10">
+        
+        {/* Logo */}
+        <div className="text-center mb-8 space-y-2">
+          <Link to="/" className="inline-flex items-center space-x-2.5 group">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-purple-500/25 group-hover:scale-105 transition-transform">
+              <Key className="w-5 h-5 -rotate-45" />
+            </div>
+            <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+              YTKey<span className="text-purple-500">.io</span>
+            </span>
+          </Link>
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white">Create Developer Account</h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Get your YouTube API key & launch into dashboard</p>
+        </div>
+
+        {/* Card */}
+        <div className="p-8 rounded-3xl bg-white dark:bg-[#11131B] border border-slate-200 dark:border-white/[0.08] shadow-2xl space-y-5">
+          
+          {error && (
+            <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 flex items-center space-x-2 text-xs text-red-500 dark:text-red-400">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          {/* 1-Click Google Sign In */}
+          <button
+            onClick={handleGoogleAuth}
+            disabled={loading}
+            className="w-full flex items-center justify-center space-x-3 py-2.5 rounded-xl bg-slate-100 dark:bg-white hover:bg-slate-200 dark:hover:bg-slate-100 text-slate-900 font-bold text-xs shadow-md border border-slate-200 dark:border-transparent transition-all"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
+              <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.26v3.15C3.27 21.37 7.34 24 12 24z"/>
+              <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.26C.46 8.17 0 9.99 0 12s.46 3.83 1.26 5.42l4.02-3.15z"/>
+              <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.27 2.63 1.26 6.58l4.02 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+            </svg>
+            <span>Sign up with Google</span>
+          </button>
+
+          <div className="flex items-center my-3">
+            <div className="flex-1 border-t border-slate-200 dark:border-white/[0.08]"></div>
+            <span className="px-3 text-[10px] text-slate-500 uppercase font-semibold">or with email</span>
+            <div className="flex-1 border-t border-slate-200 dark:border-white/[0.08]"></div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+            <div>
+              <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Developer / Bot Name</label>
+              <div className="relative">
+                <User className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="e.g. Nishkarsh"
+                  className="w-full bg-slate-100 dark:bg-[#07080D] border border-slate-300 dark:border-white/[0.08] rounded-xl pl-10 pr-4 py-2.5 text-slate-900 dark:text-white placeholder-slate-500 focus:border-purple-500 focus:outline-none transition-colors"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Email Address</label>
+              <div className="relative">
+                <Mail className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="developer@example.com"
+                  className="w-full bg-slate-100 dark:bg-[#07080D] border border-slate-300 dark:border-white/[0.08] rounded-xl pl-10 pr-4 py-2.5 text-slate-900 dark:text-white placeholder-slate-500 focus:border-purple-500 focus:outline-none transition-colors"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Password</label>
+              <div className="relative">
+                <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="At least 6 characters"
+                  className="w-full bg-slate-100 dark:bg-[#07080D] border border-slate-300 dark:border-white/[0.08] rounded-xl pl-10 pr-10 py-2.5 text-slate-900 dark:text-white placeholder-slate-500 focus:border-purple-500 focus:outline-none transition-colors"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-2 pt-1">
+              <input
+                type="checkbox"
+                id="terms"
+                checked={agreeTerms}
+                onChange={(e) => setAgreeTerms(e.target.checked)}
+                className="rounded border-slate-300 dark:border-white/[0.1] bg-slate-100 dark:bg-[#08090D] text-purple-600 focus:ring-purple-500 w-4 h-4"
+              />
+              <label htmlFor="terms" className="text-xs text-slate-500">
+                I agree to the <span className="text-slate-800 dark:text-slate-200 underline">Terms of Service</span> & API SLA
+              </label>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 rounded-xl btn-gradient-purple text-white font-bold text-xs shadow-lg shadow-purple-600/30 flex items-center justify-center space-x-2 transition-all mt-2"
+            >
+              {loading ? (
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+              ) : (
+                <>
+                  <span>Create Account & Open Dashboard</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </>
+              )}
+            </button>
+          </form>
+
+          <div className="text-center text-xs text-slate-500">
+            Already have an account?{' '}
+            <Link to="/login" className="text-purple-400 font-bold hover:underline">
+              Sign In
+            </Link>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  );
+}

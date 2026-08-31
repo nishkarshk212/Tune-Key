@@ -108,7 +108,7 @@ export default function Overview() {
   const usagePercentage = totalDailyQuota > 0 ? Math.min(100, Math.round((todayRequests / totalDailyQuota) * 100)) : 0;
 
   const primaryKey = keysList[0]?.api_key || '';
-  const apiUrl = 'http://v-bit-api.com/';
+  const apiUrl = 'https://vbit-api-store.vercel.app/api/v1/yt';
   const envConfigSnippet = `API_URL=${apiUrl}\nAPI_KEY=${primaryKey || 'v-bit-free-xxxxxxxxxxxx'}`;
 
   // Real Dynamic 7-day usage chart

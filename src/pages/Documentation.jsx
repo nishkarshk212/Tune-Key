@@ -161,11 +161,11 @@ export default function Documentation() {
                   <div className="mt-4 space-y-4">
                     <CodeBlock
                       code={`# Method 1: HTTP Header (Recommended for Python Bots)
-curl -X GET "http://v-bit-api.com/search?q=Alan+Walker" \\
+curl -X GET "https://vbit-api-store.vercel.app/api/v1/yt/search?q=Alan+Walker" \\
      -H "x-api-key: v-bit-free-YOUR_API_KEY"
 
 # Method 2: Query Parameter
-curl -X GET "http://v-bit-api.com/search?q=Alan+Walker&api_key=v-bit-free-YOUR_API_KEY"`}
+curl -X GET "https://vbit-api-store.vercel.app/api/v1/yt/search?q=Alan+Walker&api_key=v-bit-free-YOUR_API_KEY"`}
                       language="bash"
                       title="cURL Authentication Example"
                     />
@@ -217,7 +217,7 @@ STRING_SESSION = "1BVtsOGwBu7f..."
 
 # VBIT-API-STORE Dedicated YouTube API Key
 YOUTUBE_API_KEY = "v-bit-free-YOUR_UNIQUE_API_KEY"
-YOUTUBE_API_PROXY = "http://v-bit-api.com/"
+YOUTUBE_API_PROXY = "https://vbit-api-store.vercel.app/api/v1/yt"
 AUDIO_STREAM_BITRATE = 160`}
                       language="env"
                       title="config.env"
@@ -263,7 +263,7 @@ BOT_TOKEN = getenv("BOT_TOKEN", "123456:ABC-DEF")
 
 # Set VBIT-API-STORE YouTube API Key
 YOUTUBE_API_KEY = getenv("YOUTUBE_API_KEY", "v-bit-free-YOUR_UNIQUE_API_KEY")
-YT_STREAM_GATEWAY = getenv("YT_STREAM_GATEWAY", "http://v-bit-api.com/")
+YT_STREAM_GATEWAY = getenv("YT_STREAM_GATEWAY", "https://vbit-api-store.vercel.app/api/v1/yt")
 AUTO_LEAVING_ASSISTANT = bool(getenv("AUTO_LEAVING_ASSISTANT", True))`}
                       language="python"
                       title="config.py"
@@ -298,14 +298,14 @@ async def play_youtube_track(pytgcalls_app, chat_id, query):
     """
     # Step 1: Search & Get Video ID
     async with aiohttp.ClientSession() as session:
-        search_url = f"http://v-bit-api.com/search?q={query}&api_key={VBIT_API_KEY}"
+        search_url = f"https://vbit-api-store.vercel.app/api/v1/yt/search?q={query}&api_key={VBIT_API_KEY}"
         async with session.get(search_url) as resp:
             data = await resp.json()
             video_id = data['items'][0]['id']
             title = data['items'][0]['title']
 
         # Step 2: Get Direct Audio Stream
-        stream_url_endpoint = f"http://v-bit-api.com/stream?id={video_id}&api_key={VBIT_API_KEY}"
+        stream_url_endpoint = f"https://vbit-api-store.vercel.app/api/v1/yt/stream?id={video_id}&api_key={VBIT_API_KEY}"
         async with session.get(stream_url_endpoint) as stream_resp:
             stream_data = await stream_resp.json()
             direct_audio_url = stream_data['stream_url']

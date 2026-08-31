@@ -15,15 +15,17 @@ export function generateClientToken(prefix = 'tok_') {
 }
 
 export function checkAndResetDailyQuotas() {
-  // If last reset was on a previous UTC day, reset today_requests to 0
   const now = new Date();
   const todayStr = now.toISOString().split('T')[0];
   
-  const stmt = db.prepare(`
-    UPDATE api_keys 
-    SET today_requests = 0 
-    WHERE strftime('%Y-%m-%d', updated_at) < ?
-  `);
-  
-  stmt.run(todayStr);
+  try {
+    const stmt = db.prepare(`
+      UPDATE api_keys 
+      SET today_requests = 0 
+      WHERE last_used_at IS NOT NULL AND date(last_used_at) < date(?)
+    `);
+    stmt.run(todayStr);
+  } catch (err) {
+    console.error('Error resetting daily quotas:', err.message);
+  }
 }

@@ -107,25 +107,33 @@ export function authenticateApiKey(req, res, next) {
     });
   }
 
+  // Immediately increment usage in database
+  try {
+    db.prepare(`
+      UPDATE api_keys
+      SET used_quota = used_quota + 1,
+          today_requests = today_requests + 1,
+          last_used_at = CURRENT_TIMESTAMP,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).run(keyRecord.id);
+
+    keyRecord.today_requests += 1;
+    keyRecord.used_quota += 1;
+  } catch (err) {
+    console.error('Error incrementing key usage:', err.message);
+  }
+
   // Record start time for latency tracking
   req.startTime = Date.now();
   req.apiKeyRecord = keyRecord;
   req.clientIp = clientIp;
 
-  // Intercept response finish to update stats and log
+  // Intercept response finish to log telemetry
   res.on('finish', () => {
     try {
       const latency = Date.now() - req.startTime;
       const botAgent = req.headers['user-agent'] || 'TelegramBot-Client/1.0';
-
-      // Increment usage in database
-      db.prepare(`
-        UPDATE api_keys
-        SET used_quota = used_quota + 1,
-            today_requests = today_requests + 1,
-            last_used_at = CURRENT_TIMESTAMP
-        WHERE id = ?
-      `).run(keyRecord.id);
 
       // Log request with unique id
       const logId = 'log_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);

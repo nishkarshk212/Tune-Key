@@ -23,6 +23,9 @@ initDatabase();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Trust proxy for Heroku / Vercel headers
+app.set('trust proxy', 1);
+
 // Middlewares
 app.use(cors());
 app.use(express.json());

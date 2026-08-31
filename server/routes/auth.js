@@ -97,9 +97,8 @@ router.post('/login', (req, res) => {
       return res.status(403).json({ success: false, error: 'This account is suspended. Contact support.' });
     }
 
-    const validPassword = bcrypt.compareSync(password, user.password_hash);
-    if (!validPassword) {
-      return res.status(401).json({ success: false, error: 'Invalid email or password.' });
+    if (!user.password_hash || !bcrypt.compareSync(password, user.password_hash)) {
+      return res.status(401).json({ success: false, error: 'Invalid email or password. If you used Google Sign-In, please continue with Google.' });
     }
 
     const token = generateToken(user);

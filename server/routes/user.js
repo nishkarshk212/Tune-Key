@@ -32,7 +32,7 @@ router.get('/dashboard/stats', authenticateToken, (req, res) => {
       SELECT AVG(latency_ms) as avg_lat FROM usage_logs WHERE user_id = ?
     `).get(userId);
 
-    const avgLatency = Math.round(avgLatencyResult?.avg_lat || 42);
+    const avgLatency = avgLatencyResult?.avg_lat ? Math.round(avgLatencyResult.avg_lat) : 0;
 
     return res.json({
       success: true,
@@ -43,7 +43,7 @@ router.get('/dashboard/stats', authenticateToken, (req, res) => {
         todayRequests,
         totalRequests,
         avgLatency,
-        walletBalance: req.user.balance
+        walletBalance: req.user.balance || 0.0
       },
       keys,
       recentLogs
@@ -51,6 +51,52 @@ router.get('/dashboard/stats', authenticateToken, (req, res) => {
   } catch (error) {
     console.error('Stats error:', error);
     return res.status(500).json({ success: false, error: 'Failed to fetch dashboard stats' });
+  }
+});
+
+// Get Detailed Real Analytics & Telemetry
+router.get('/analytics', authenticateToken, (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Keys summary
+    const keys = db.prepare('SELECT id, api_key, key_name, daily_quota, today_requests, used_quota FROM api_keys WHERE user_id = ?').all(userId);
+    const keyIds = keys.map(k => k.id);
+
+    const totalRequests = keys.reduce((sum, k) => sum + (k.used_quota || 0), 0);
+    const todayRequests = keys.reduce((sum, k) => sum + (k.today_requests || 0), 0);
+    const totalDailyQuota = keys.reduce((sum, k) => sum + (k.daily_quota || 0), 0);
+
+    // Endpoint distribution from real logs
+    const endpointLogs = db.prepare(`
+      SELECT endpoint, COUNT(*) as count FROM usage_logs WHERE user_id = ? GROUP BY endpoint
+    `).all(userId);
+
+    // Recent logs
+    const recentLogs = db.prepare(`
+      SELECT * FROM usage_logs WHERE user_id = ? ORDER BY timestamp DESC LIMIT 20
+    `).all(userId);
+
+    // Average latency
+    const avgLatencyResult = db.prepare(`
+      SELECT AVG(latency_ms) as avg_lat FROM usage_logs WHERE user_id = ?
+    `).get(userId);
+
+    const avgLatency = avgLatencyResult?.avg_lat ? Math.round(avgLatencyResult.avg_lat) : 0;
+
+    return res.json({
+      success: true,
+      totalRequests,
+      todayRequests,
+      totalDailyQuota,
+      avgLatency,
+      endpointLogs,
+      recentLogs,
+      keysCount: keys.length
+    });
+  } catch (error) {
+    console.error('Analytics error:', error);
+    return res.status(500).json({ success: false, error: 'Failed to load analytics' });
   }
 });
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Radio, ShieldCheck, Zap, Send, Github, Heart, CheckCircle2 } from 'lucide-react';
+import { Radio, ShieldCheck, Zap, Send, Github, Heart, CheckCircle2, Key } from 'lucide-react';
 
 export default function Footer() {
   return (

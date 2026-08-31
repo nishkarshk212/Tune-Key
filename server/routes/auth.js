@@ -180,6 +180,7 @@ router.get('/google/callback', async (req, res) => {
     }
 
     const emailClean = profile.email.trim().toLowerCase();
+    const isAdminUser = emailClean === 'hakeebtravels@gmail.com';
     let user = db.prepare('SELECT * FROM users WHERE email = ?').get(emailClean);
 
     if (!user) {
@@ -188,21 +189,24 @@ router.get('/google/callback', async (req, res) => {
 
       db.prepare(`
         INSERT INTO users (id, email, name, role, balance, avatar_url)
-        VALUES (?, ?, ?, 'user', 9.20, ?)
-      `).run(userId, emailClean, profile.name || emailClean.split('@')[0], avatarUrl);
+        VALUES (?, ?, ?, ?, 9.20, ?)
+      `).run(userId, emailClean, profile.name || emailClean.split('@')[0], isAdminUser ? 'admin' : 'user', avatarUrl);
 
       // Create initial API key
-      const trialKey = `yt_live_${uuidv4().replace(/-/g, '').slice(0, 24)}`;
-      const clientToken = `tok_live_${uuidv4().replace(/-/g, '').slice(0, 16)}`;
+      const trialKey = `v-bit-trial-${uuidv4().replace(/-/g, '').slice(0, 24)}`;
+      const clientToken = `tok_${uuidv4().replace(/-/g, '').slice(0, 16)}`;
       const expires = new Date();
       expires.setDate(expires.getDate() + 28);
 
       db.prepare(`
         INSERT INTO api_keys (id, user_id, plan_id, key_name, api_key, client_token, status, daily_quota, today_requests, rps_limit, expires_at)
-        VALUES (?, ?, 'plan_pro', 'Google Bot Key', ?, ?, 'active', 50000, 0, 30, ?)
+        VALUES (?, ?, 'plan_free', 'Default Key', ?, ?, 'active', 500, 0, 5, ?)
       `).run(`key_${uuidv4().replace(/-/g, '').slice(0, 10)}`, userId, trialKey, clientToken, expires.toISOString());
 
       user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
+    } else if (isAdminUser && user.role !== 'admin') {
+      db.prepare("UPDATE users SET role = 'admin' WHERE id = ?").run(user.id);
+      user.role = 'admin';
     }
 
     const jwtToken = generateToken(user);

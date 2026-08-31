@@ -44,7 +44,7 @@ YOUTUBE_API_KEY = "${keyVal}"
 YOUTUBE_API_PROXY = "https://api.tunekey.io/api/v1/yt"
 AUDIO_STREAM_BITRATE = ${bitrate}
 AUTO_LEAVING_ASSISTANT = True
-SUPPORT_CHANNEL = "https://t.me/TuneKeyAPI"`;
+SUPPORT_CHANNEL = "https://t.me/VAMPIREUPDATES"`;
     } else if (framework === 'anonx') {
       return `# AnonXMusic Bot - config.py
 import os

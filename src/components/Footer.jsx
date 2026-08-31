@@ -81,13 +81,13 @@ export default function Footer() {
             <h4 className="text-slate-900 dark:text-white font-semibold text-xs tracking-wider uppercase mb-3">Community & Support</h4>
             <div className="space-y-3">
               <a
-                href="https://t.me/"
+                href="https://t.me/VAMPIREUPDATES"
                 target="_blank"
                 rel="noreferrer"
                 className="flex items-center space-x-2 px-3 py-2 rounded-xl bg-telegram/15 border border-telegram/30 text-telegram-dark dark:text-telegram-light hover:bg-telegram/25 transition-all text-xs font-semibold"
               >
                 <Send className="w-4 h-4" />
-                <span>Join Telegram Group</span>
+                <span>Join @VAMPIREUPDATES</span>
               </a>
               <div className="text-[11px] text-slate-500 leading-tight">
                 24/7 Developer Support, Quota Upgrades, and Bot Deployment help on Telegram.

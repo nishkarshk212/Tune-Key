@@ -89,12 +89,12 @@ export default function Navbar() {
                 FAQ
               </a>
               <a
-                href="https://t.me/"
+                href="https://t.me/VAMPIREUPDATES"
                 target="_blank"
                 rel="noreferrer"
                 className="hover:text-slate-900 dark:hover:text-white transition-colors"
               >
-                Contact
+                Community & Support
               </a>
             </nav>
 

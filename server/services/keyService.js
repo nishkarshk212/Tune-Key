@@ -1,12 +1,17 @@
 import crypto from 'crypto';
 import db from '../database.js';
 
-export function generateApiKey(prefix = 'yt_live_') {
-  const randomHex = crypto.randomBytes(16).toString('hex');
-  return `${prefix}${randomHex}`;
+export function generateApiKey(prefix = 'v-bit-', length = 32) {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  const bytes = crypto.randomBytes(length);
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(bytes[i] % chars.length);
+  }
+  return `${prefix}${result}`;
 }
 
-export function generateClientToken(prefix = 'tok_live_') {
+export function generateClientToken(prefix = 'tok_') {
   const randomHex = crypto.randomBytes(8).toString('hex');
   return `${prefix}${randomHex}`;
 }

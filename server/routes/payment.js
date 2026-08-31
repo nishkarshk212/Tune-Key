@@ -208,6 +208,10 @@ router.post('/razorpay/verify', authenticateToken, async (req, res) => {
     });
   } catch (error) {
     console.error('Razorpay Verify Error:', error);
+    return res.status(500).json({ success: false, error: error.message || 'Payment verification failed' });
+  }
+});
+
 // 4. Submit Manual UPI QR Payment with UTR Reference Number
 router.post('/manual/submit-utr', authenticateToken, async (req, res) => {
   try {

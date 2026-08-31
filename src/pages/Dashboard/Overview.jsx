@@ -18,7 +18,12 @@ import {
   AlertCircle,
   Clock,
   ExternalLink,
-  ShieldCheck
+  ShieldCheck,
+  Radio,
+  Terminal,
+  Zap,
+  Globe,
+  Bot
 } from 'lucide-react';
 import { 
   Chart as ChartJS, 
@@ -51,6 +56,7 @@ export default function Overview() {
   const [loading, setLoading] = useState(true);
   const [copiedKey, setCopiedKey] = useState(null);
   const [revealedKeys, setRevealedKeys] = useState({});
+  const [generatingFreeKey, setGeneratingFreeKey] = useState(false);
 
   const fetchStats = async () => {
     try {
@@ -78,6 +84,21 @@ export default function Overview() {
     setRevealedKeys(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
+  const handleAutoGenerateFreeKey = async () => {
+    try {
+      setGeneratingFreeKey(true);
+      await api.post('/user/keys/create', {
+        keyName: 'Free YouTube Bot Key',
+        planId: 'plan_free'
+      });
+      fetchStats();
+    } catch (err) {
+      console.error('Failed to create free key:', err);
+    } finally {
+      setGeneratingFreeKey(false);
+    }
+  };
+
   // Extract real dynamic stats
   const keysList = data?.keys || [];
   const activeKeysCount = data?.stats?.activeKeysCount ?? 0;
@@ -85,6 +106,10 @@ export default function Overview() {
   const totalDailyQuota = data?.stats?.totalDailyQuota ?? (keysList[0]?.daily_quota || 0);
   const activePlanName = keysList[0]?.plan_name || (user?.role === 'admin' ? 'Super Admin' : 'Free Tier');
   const usagePercentage = totalDailyQuota > 0 ? Math.min(100, Math.round((todayRequests / totalDailyQuota) * 100)) : 0;
+
+  const primaryKey = keysList[0]?.api_key || '';
+  const apiUrl = typeof window !== 'undefined' ? `${window.location.origin}/api` : 'https://vbit-api-store.vercel.app/api';
+  const envConfigSnippet = `API_URL=${apiUrl}\nAPI_KEY=${primaryKey || 'v-bit-free-xxxxxxxxxxxx'}`;
 
   // Real Dynamic 7-day usage chart
   const chartData = {
@@ -217,6 +242,138 @@ export default function Overview() {
           <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400">
             <Wallet className="w-5 h-5" />
           </div>
+        </div>
+
+      </div>
+
+      {/* 🚀 TELEGRAM MUSIC BOT CONNECTION CREDENTIALS CARD */}
+      <div className="p-6 rounded-3xl bg-gradient-to-br from-purple-900/20 via-[#11131B] to-blue-900/20 border-2 border-purple-500/30 dark:border-purple-500/40 shadow-xl shadow-purple-950/20 space-y-5">
+        
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200/60 dark:border-white/[0.08]">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 rounded-xl bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-purple-400">
+              <Bot className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center space-x-2">
+                <h2 className="text-base font-bold text-slate-900 dark:text-white">
+                  Telegram Music Bot Credentials
+                </h2>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-purple-500/20 text-purple-600 dark:text-purple-300 border border-purple-500/30">
+                  Yukki / AnonX / PyTgCalls
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Use these parameters in your Telegram Music Bot's <code className="text-purple-400">.env</code> or config vars.
+              </p>
+            </div>
+          </div>
+
+          <Link
+            to="/dashboard/bot-config"
+            className="text-xs text-purple-500 hover:text-purple-400 font-bold flex items-center space-x-1 transition-colors self-start sm:self-auto"
+          >
+            <span>Full Setup Guide</span>
+            <ExternalLink className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+
+        {/* Credentials Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          
+          {/* Field 1: API URL */}
+          <div className="p-4 rounded-2xl bg-white/80 dark:bg-[#161924] border border-slate-200 dark:border-white/[0.06] space-y-2">
+            <div className="flex justify-between items-center text-xs">
+              <span className="font-bold text-slate-700 dark:text-slate-300 flex items-center space-x-1.5">
+                <Globe className="w-3.5 h-3.5 text-cyan-400" />
+                <span>API_URL (Base Endpoint)</span>
+              </span>
+              <span className="text-[10px] font-mono text-emerald-500 font-bold">● Online</span>
+            </div>
+            <div className="flex items-center justify-between p-2 rounded-xl bg-slate-100 dark:bg-[#0E1018] border border-slate-200 dark:border-white/[0.06] font-mono text-xs text-slate-900 dark:text-white">
+              <span className="truncate pr-2 select-all">{apiUrl}</span>
+              <button
+                onClick={() => handleCopy(apiUrl, 'overview-api-url')}
+                className="px-2.5 py-1 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-sans text-xs font-bold flex items-center space-x-1 transition-all flex-shrink-0"
+              >
+                {copiedKey === 'overview-api-url' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                <span>{copiedKey === 'overview-api-url' ? 'Copied' : 'Copy URL'}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Field 2: API KEY */}
+          <div className="p-4 rounded-2xl bg-white/80 dark:bg-[#161924] border border-slate-200 dark:border-white/[0.06] space-y-2">
+            <div className="flex justify-between items-center text-xs">
+              <span className="font-bold text-slate-700 dark:text-slate-300 flex items-center space-x-1.5">
+                <Key className="w-3.5 h-3.5 text-purple-400" />
+                <span>API_KEY (Your Bot Token)</span>
+              </span>
+              {primaryKey && (
+                <span className="text-[10px] text-purple-400 font-mono font-bold">
+                  {totalDailyQuota} req/day
+                </span>
+              )}
+            </div>
+
+            {primaryKey ? (
+              <div className="flex items-center justify-between p-2 rounded-xl bg-slate-100 dark:bg-[#0E1018] border border-slate-200 dark:border-white/[0.06] font-mono text-xs text-slate-900 dark:text-white">
+                <span className="truncate pr-2 select-all">
+                  {revealedKeys['overview-primary-key'] ? primaryKey : `${primaryKey.slice(0, 12)}••••••••••••••••`}
+                </span>
+                <div className="flex items-center space-x-1.5 flex-shrink-0">
+                  <button
+                    onClick={() => toggleReveal('overview-primary-key')}
+                    className="p-1 text-slate-400 hover:text-white transition-colors"
+                    title="Toggle Reveal"
+                  >
+                    {revealedKeys['overview-primary-key'] ? <EyeOff className="w-3.5 h-3.5 text-purple-400" /> : <Eye className="w-3.5 h-3.5" />}
+                  </button>
+                  <button
+                    onClick={() => handleCopy(primaryKey, 'overview-primary-key')}
+                    className="px-2.5 py-1 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-sans text-xs font-bold flex items-center space-x-1 transition-all"
+                  >
+                    {copiedKey === 'overview-primary-key' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                    <span>{copiedKey === 'overview-primary-key' ? 'Copied' : 'Copy Key'}</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between p-2 rounded-xl bg-slate-100 dark:bg-[#0E1018] border border-slate-200 dark:border-white/[0.06] text-xs">
+                <span className="text-slate-500 italic">No key generated yet</span>
+                <button
+                  onClick={handleAutoGenerateFreeKey}
+                  disabled={generatingFreeKey}
+                  className="px-3 py-1 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-sans text-xs font-bold flex items-center space-x-1 transition-all shadow-md"
+                >
+                  <Zap className="w-3 h-3" />
+                  <span>{generatingFreeKey ? 'Generating...' : '⚡ Generate Free Key'}</span>
+                </button>
+              </div>
+            )}
+          </div>
+
+        </div>
+
+        {/* 1-Click .env Snippet */}
+        <div className="p-3.5 rounded-2xl bg-slate-900 dark:bg-[#08090E] border border-slate-800 text-xs font-mono flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="space-y-1">
+            <span className="text-[10px] text-slate-500 font-sans font-bold uppercase tracking-wider block">
+              Quick Paste for Telegram Bot .env:
+            </span>
+            <div className="text-slate-300">
+              <span className="text-purple-400 font-bold">API_URL</span>={apiUrl}<br />
+              <span className="text-purple-400 font-bold">API_KEY</span>={primaryKey ? (revealedKeys['overview-primary-key'] ? primaryKey : `${primaryKey.slice(0, 12)}••••••••••••••••`) : 'YOUR_API_KEY_HERE'}
+            </div>
+          </div>
+
+          <button
+            onClick={() => handleCopy(envConfigSnippet, 'overview-env-snippet')}
+            className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold font-sans flex items-center justify-center space-x-1.5 transition-all shadow-md self-start sm:self-auto"
+          >
+            {copiedKey === 'overview-env-snippet' ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+            <span>{copiedKey === 'overview-env-snippet' ? 'Copied .env Snippet!' : 'Copy .env Config'}</span>
+          </button>
         </div>
 
       </div>

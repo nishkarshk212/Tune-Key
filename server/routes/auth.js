@@ -122,7 +122,7 @@ router.get('/google/url', (req, res) => {
     client_id: clientId,
     access_type: 'offline',
     response_type: 'code',
-    prompt: 'consent',
+    prompt: 'select_account',
     scope: [
       'https://www.googleapis.com/auth/userinfo.profile',
       'https://www.googleapis.com/auth/userinfo.email',

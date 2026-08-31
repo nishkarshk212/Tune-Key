@@ -87,24 +87,19 @@ export default function SignInModal({ isOpen, onClose, defaultTab = 'signin' }) 
       const res = await api.get('/auth/google/url');
       if (res.data?.url) {
         window.location.href = res.data.url;
-      } else {
-        await loginWithGoogle({
-          email: 'nishkarsh.dev@gmail.com',
-          name: 'Nishkarsh',
-          avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80'
-        });
-        onClose();
-        navigate('/dashboard');
+        return;
       }
+
+      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '114336598366-2k385t80e0ortp5tdfnvumg9a02ea8t6.apps.googleusercontent.com';
+      const redirectUri = `${window.location.origin}/api/auth/google/callback`;
+      const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent('https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email')}&prompt=select_account`;
+      window.location.href = googleAuthUrl;
     } catch (err) {
       console.error('Google Auth error:', err);
-      await loginWithGoogle({
-        email: 'nishkarsh.dev@gmail.com',
-        name: 'Nishkarsh',
-        avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80'
-      });
-      onClose();
-      navigate('/dashboard');
+      const clientId = '114336598366-2k385t80e0ortp5tdfnvumg9a02ea8t6.apps.googleusercontent.com';
+      const redirectUri = `${window.location.origin}/api/auth/google/callback`;
+      const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent('https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email')}&prompt=select_account`;
+      window.location.href = googleAuthUrl;
     } finally {
       setLoading(false);
     }

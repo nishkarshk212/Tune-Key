@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import api from '../utils/api';
 import { Key, Lock, Mail, User, ArrowRight, Eye, EyeOff, AlertCircle, Sun, Moon } from 'lucide-react';
 
 export default function Register() {
@@ -18,6 +19,26 @@ export default function Register() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const plan = searchParams.get('plan');
+
+  // Handle Google OAuth callback parameters in URL
+  useEffect(() => {
+    const token = searchParams.get('token');
+    const userParam = searchParams.get('user');
+    const errParam = searchParams.get('error');
+
+    if (errParam) {
+      setError(errParam);
+    } else if (token && userParam) {
+      try {
+        const userObj = JSON.parse(decodeURIComponent(userParam));
+        localStorage.setItem('tunekey_token', token);
+        localStorage.setItem('tunekey_user', JSON.stringify(userObj));
+        window.location.href = '/dashboard';
+      } catch (e) {
+        console.error('Failed to parse OAuth user payload:', e);
+      }
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -43,14 +64,23 @@ export default function Register() {
     setError('');
     setLoading(true);
     try {
-      await loginWithGoogle({
-        email: 'nishkarsh.dev@gmail.com',
-        name: 'Nishkarsh',
-        avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80'
-      });
-      navigate('/dashboard', { replace: true });
+      const res = await api.get('/auth/google/url');
+      if (res.data?.url) {
+        window.location.href = res.data.url;
+        return;
+      }
+      
+      // Direct client fallback
+      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '114336598366-2k385t80e0ortp5tdfnvumg9a02ea8t6.apps.googleusercontent.com';
+      const redirectUri = `${window.location.origin}/api/auth/google/callback`;
+      const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent('https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email')}&prompt=select_account`;
+      window.location.href = googleAuthUrl;
     } catch (err) {
-      setError(err.message);
+      console.error('Google Auth redirect error:', err);
+      const clientId = '114336598366-2k385t80e0ortp5tdfnvumg9a02ea8t6.apps.googleusercontent.com';
+      const redirectUri = `${window.location.origin}/api/auth/google/callback`;
+      const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent('https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email')}&prompt=select_account`;
+      window.location.href = googleAuthUrl;
     } finally {
       setLoading(false);
     }

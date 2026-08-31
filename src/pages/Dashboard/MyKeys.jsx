@@ -541,22 +541,6 @@ export default function MyKeys() {
               />
             </div>
 
-            {/* 3. Target Framework */}
-            <div>
-              <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Target Bot Framework</label>
-              <select
-                value={botType}
-                onChange={(e) => setBotType(e.target.value)}
-                className="w-full bg-slate-100 dark:bg-[#070A10] border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-white focus:border-purple-500 focus:outline-none"
-              >
-                <option value="YukkiMusic Bot v3">YukkiMusic Bot v3</option>
-                <option value="AnonXMusic Bot">AnonXMusic Bot</option>
-                <option value="PyTgCalls Voice Client">PyTgCalls Voice Client</option>
-                <option value="Victoria & Daisy Music">Victoria & Daisy Music</option>
-                <option value="Custom Node / Python Bot">Custom Node / Python Bot</option>
-              </select>
-            </div>
-
             <div className="pt-3 flex justify-end space-x-2 border-t border-slate-100 dark:border-white/[0.06]">
               <button
                 type="button"

@@ -326,7 +326,7 @@ export default function Plans() {
               </div>
             </div>
 
-            {/* Pay CTA Button */}
+            {/* Pay / Activate CTA Button */}
             <button
               onClick={handleCheckout}
               disabled={processing || !selectedPlan}
@@ -336,7 +336,9 @@ export default function Plans() {
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
               ) : (
                 <>
-                  <span>Pay ₹{selectedPlan?.price} via Razorpay</span>
+                  <span>
+                    {selectedPlan?.price === 0 ? 'Activate FREE Plan (500 req/day)' : `Pay ₹${selectedPlan?.price} via Razorpay`}
+                  </span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </>
               )}

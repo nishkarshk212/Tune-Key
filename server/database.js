@@ -152,17 +152,36 @@ function seedData() {
   // Always sync seed plans with Indian Rupee (INR) pricing and 1 API Key per plan
   const plans = [
     {
+      id: 'plan_free',
+      name: 'FREE',
+      tier: 'Free',
+      price: 0,
+      billing_period: 'monthly',
+      daily_quota: 500,
+      total_quota: 15000,
+      rps_limit: 5,
+      max_keys: 1,
+      features: JSON.stringify([
+        '500 Requests / day',
+        '1 Dedicated API Key',
+        'Community Support',
+        '98% Uptime'
+      ]),
+      is_popular: 0,
+      is_active: 1
+    },
+    {
       id: 'plan_basic',
       name: 'BASIC',
       tier: 'Basic',
       price: 49,
       billing_period: 'monthly',
-      daily_quota: 10000,
-      total_quota: 300000,
+      daily_quota: 1000,
+      total_quota: 30000,
       rps_limit: 10,
       max_keys: 1,
       features: JSON.stringify([
-        '10,000 Requests / day',
+        '1,000 Requests / day',
         '1 Dedicated API Key',
         'Standard Support',
         '99% Uptime'
@@ -176,12 +195,12 @@ function seedData() {
       tier: 'Pro',
       price: 99,
       billing_period: 'monthly',
-      daily_quota: 50000,
-      total_quota: 1500000,
-      rps_limit: 30,
+      daily_quota: 1500,
+      total_quota: 45000,
+      rps_limit: 20,
       max_keys: 1,
       features: JSON.stringify([
-        '50,000 Requests / day',
+        '1,500 Requests / day',
         '1 Dedicated API Key',
         'Priority Support',
         '99.9% Uptime'
@@ -195,12 +214,12 @@ function seedData() {
       tier: 'Advanced',
       price: 149,
       billing_period: 'monthly',
-      daily_quota: 150000,
-      total_quota: 4500000,
-      rps_limit: 60,
+      daily_quota: 2000,
+      total_quota: 60000,
+      rps_limit: 30,
       max_keys: 1,
       features: JSON.stringify([
-        '150,000 Requests / day',
+        '2,000 Requests / day',
         '1 Dedicated API Key',
         'Priority Support',
         '99.9% Uptime'
@@ -214,12 +233,12 @@ function seedData() {
       tier: 'Unlimited',
       price: 199,
       billing_period: 'monthly',
-      daily_quota: 1000000,
-      total_quota: 30000000,
-      rps_limit: 120,
+      daily_quota: 2500,
+      total_quota: 75000,
+      rps_limit: 50,
       max_keys: 1,
       features: JSON.stringify([
-        'Unlimited Requests',
+        '2,500 Requests / day',
         '1 Dedicated API Key',
         'VIP Support',
         '99.9% Uptime'

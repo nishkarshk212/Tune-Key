@@ -65,11 +65,22 @@ export default function LandingPage() {
 
   const plans = [
     {
+      id: 'plan_free',
+      name: 'FREE',
+      monthlyPrice: 0,
+      yearlyPrice: 0,
+      requests: '500 Requests / day',
+      keys: '1 Dedicated API Key',
+      support: 'Community Support',
+      uptime: '98% Uptime',
+      isPopular: false
+    },
+    {
       id: 'plan_basic',
       name: 'BASIC',
       monthlyPrice: 49,
       yearlyPrice: 39,
-      requests: '10,000 Requests / day',
+      requests: '1,000 Requests / day',
       keys: '1 Dedicated API Key',
       support: 'Standard Support',
       uptime: '99% Uptime',
@@ -80,7 +91,7 @@ export default function LandingPage() {
       name: 'PRO',
       monthlyPrice: 99,
       yearlyPrice: 79,
-      requests: '50,000 Requests / day',
+      requests: '1,500 Requests / day',
       keys: '1 Dedicated API Key',
       support: 'Priority Support',
       uptime: '99.9% Uptime',
@@ -91,7 +102,7 @@ export default function LandingPage() {
       name: 'ADVANCED',
       monthlyPrice: 149,
       yearlyPrice: 119,
-      requests: '150,000 Requests / day',
+      requests: '2,000 Requests / day',
       keys: '1 Dedicated API Key',
       support: 'Priority Support',
       uptime: '99.9% Uptime',
@@ -102,7 +113,7 @@ export default function LandingPage() {
       name: 'UNLIMITED',
       monthlyPrice: 199,
       yearlyPrice: 159,
-      requests: 'Unlimited Requests',
+      requests: '2,500 Requests / day',
       keys: '1 Dedicated API Key',
       support: 'VIP Support',
       uptime: '99.9% Uptime',
@@ -363,8 +374,8 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* 4 Pricing Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-12">
+        {/* 5 Pricing Cards Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mt-12">
           {plans.map((p) => {
             const price = billingCycle === 'yearly' ? p.yearlyPrice : p.monthlyPrice;
 

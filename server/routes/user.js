@@ -2,7 +2,7 @@ import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import db from '../database.js';
 import { authenticateToken } from '../middleware/auth.js';
-import { generateApiKey, generateClientToken, checkAndResetDailyQuotas } from '../services/keyService.js';
+import { generateApiKey, generateApiKeyForPlan, generateClientToken, checkAndResetDailyQuotas } from '../services/keyService.js';
 
 const router = express.Router();
 
@@ -74,14 +74,16 @@ router.get('/keys', authenticateToken, (req, res) => {
 // Create / Provision New API Key
 router.post('/keys/create', authenticateToken, (req, res) => {
   try {
-    const { keyName, allowedIps, botType } = req.body;
+    const { keyName, allowedIps, botType, planId } = req.body;
     const userId = req.user.id;
 
-    // Check user's current active plan / keys count
-    const currentKeys = db.prepare("SELECT COUNT(*) as count FROM api_keys WHERE user_id = ? AND status != 'revoked'").get(userId);
+    // Get selected plan or fallback to free plan
+    const targetPlanId = planId || 'plan_free';
+    const plan = db.prepare('SELECT * FROM plans WHERE id = ?').get(targetPlanId) 
+      || db.prepare("SELECT * FROM plans WHERE id = 'plan_free'").get()
+      || { id: 'plan_free', name: 'FREE', tier: 'Free', daily_quota: 500, total_quota: 15000, rps_limit: 5 };
 
-    // Check plan limits (default allowance 3 without dedicated subscription or unlimited if paid)
-    const newApiKey = generateApiKey();
+    const newApiKey = generateApiKeyForPlan(plan.tier);
     const newClientToken = generateClientToken();
     const keyId = `key_${uuidv4().replace(/-/g, '').slice(0, 10)}`;
 
@@ -92,22 +94,32 @@ router.post('/keys/create', authenticateToken, (req, res) => {
       INSERT INTO api_keys (
         id, user_id, plan_id, key_name, api_key, client_token, status,
         daily_quota, total_quota, rps_limit, allowed_ips, bot_type, expires_at
-      ) VALUES (?, ?, 'plan_starter', ?, ?, ?, 'active', 25000, 750000, 15, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, 'active', ?, ?, ?, ?, ?, ?)
     `).run(
       keyId,
       userId,
-      keyName?.trim() || `Telegram Music Bot #${currentKeys.count + 1}`,
+      plan.id,
+      keyName?.trim() || `${plan.name} Bot Key`,
       newApiKey,
       newClientToken,
+      plan.daily_quota || 500,
+      plan.total_quota || 15000,
+      plan.rps_limit || 5,
       allowedIps?.trim() || '',
-      botType || 'YukkiMusic / AnonX / PyTgCalls',
+      botType || 'YukkiMusic Bot v3',
       expires.toISOString()
     );
 
-    const created = db.prepare('SELECT * FROM api_keys WHERE id = ?').get(keyId);
+    const created = db.prepare(`
+      SELECT k.*, p.name as plan_name, p.tier as plan_tier
+      FROM api_keys k
+      LEFT JOIN plans p ON k.plan_id = p.id
+      WHERE k.id = ?
+    `).get(keyId);
+
     return res.status(201).json({
       success: true,
-      message: 'New Telegram Bot API key successfully generated!',
+      message: `🎉 Successfully generated ${plan.name} API Key (${plan.daily_quota} req/day)!`,
       key: created
     });
   } catch (error) {

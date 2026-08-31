@@ -38,6 +38,8 @@ export default function MyKeys() {
   const [keyName, setKeyName] = useState('');
   const [allowedIps, setAllowedIps] = useState('');
   const [botType, setBotType] = useState('YukkiMusic Bot v3');
+  const [selectedPlanId, setSelectedPlanId] = useState('plan_free');
+  const [createdNewKey, setCreatedNewKey] = useState(null);
 
   const [searchParams] = useSearchParams();
 
@@ -56,6 +58,8 @@ export default function MyKeys() {
   useEffect(() => {
     fetchKeys();
     if (searchParams.get('action') === 'create') {
+      setSelectedPlanId('plan_free');
+      setCreatedNewKey(null);
       setIsCreateModalOpen(true);
     }
   }, [searchParams]);
@@ -75,14 +79,13 @@ export default function MyKeys() {
     e.preventDefault();
     try {
       const res = await api.post('/user/keys/create', {
-        keyName,
+        keyName: keyName || 'Free YouTube Bot Key',
         allowedIps,
-        botType
+        botType,
+        planId: selectedPlanId
       });
       showNotification(res.data.message || 'API Key created successfully!');
-      setIsCreateModalOpen(false);
-      setKeyName('');
-      setAllowedIps('');
+      setCreatedNewKey(res.data.key);
       fetchKeys();
     } catch (err) {
       showNotification(err.response?.data?.error || 'Failed to create key', 'error');
@@ -402,67 +405,185 @@ export default function MyKeys() {
       {/* MODAL 1: CREATE NEW KEY */}
       <Modal
         isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        title="Provision New YouTube API Key"
+        onClose={() => {
+          setIsCreateModalOpen(false);
+          setCreatedNewKey(null);
+        }}
+        title="Provision YouTube API Key"
       >
-        <form onSubmit={handleCreateKey} className="space-y-4 text-xs">
-          <div>
-            <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Key Label / Bot Name</label>
-            <input
-              type="text"
-              required
-              value={keyName}
-              onChange={(e) => setKeyName(e.target.value)}
-              placeholder="e.g. YukkiMusic Bot #2"
-              className="w-full bg-slate-100 dark:bg-[#070A10] border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-white placeholder-slate-400 focus:border-brand-500 focus:outline-none"
-            />
-          </div>
+        {createdNewKey ? (
+          <div className="space-y-4 text-xs">
+            <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 space-y-2">
+              <div className="flex items-center space-x-2 text-emerald-600 dark:text-emerald-400 font-bold text-sm">
+                <CheckCircle2 className="w-5 h-5" />
+                <span>API Key Provisioned Successfully!</span>
+              </div>
+              <p className="text-slate-600 dark:text-slate-300">
+                Your dedicated <strong>{createdNewKey.plan_name || 'FREE'}</strong> API key is ready. Add this to your Telegram Bot config.
+              </p>
+            </div>
 
-          <div>
-            <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Target Bot Framework</label>
-            <select
-              value={botType}
-              onChange={(e) => setBotType(e.target.value)}
-              className="w-full bg-slate-100 dark:bg-[#070A10] border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-white focus:border-brand-500 focus:outline-none"
-            >
-              <option value="YukkiMusic Bot v3">YukkiMusic Bot v3</option>
-              <option value="AnonXMusic Bot">AnonXMusic Bot</option>
-              <option value="PyTgCalls Voice Client">PyTgCalls Voice Client</option>
-              <option value="Victoria & Daisy Music">Victoria & Daisy Music</option>
-              <option value="Custom Node / Python Bot">Custom Node / Python Bot</option>
-            </select>
-          </div>
+            {/* Key Card */}
+            <div className="p-4 rounded-xl bg-slate-100 dark:bg-[#0E1018] border border-slate-200 dark:border-white/[0.08] space-y-2">
+              <div className="flex justify-between items-center text-slate-500 font-semibold text-[11px]">
+                <span>YOUR API KEY:</span>
+                <span className="text-purple-400 font-bold">{createdNewKey.daily_quota} req / day</span>
+              </div>
+              <div className="flex items-center justify-between p-2.5 rounded-lg bg-white dark:bg-[#161924] border border-slate-200 dark:border-white/[0.06] font-mono text-slate-900 dark:text-white font-bold">
+                <span className="truncate pr-2">{createdNewKey.api_key}</span>
+                <button
+                  onClick={() => handleCopy(createdNewKey.api_key, 'modal-key')}
+                  className="px-3 py-1.5 rounded-md bg-purple-600 hover:bg-purple-500 text-white font-sans text-xs font-bold flex items-center space-x-1 transition-all"
+                >
+                  {copiedField === 'modal-key' ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>{copiedField === 'modal-key' ? 'Copied' : 'Copy'}</span>
+                </button>
+              </div>
+            </div>
 
-          <div>
-            <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">IP Whitelist (Optional)</label>
-            <input
-              type="text"
-              value={allowedIps}
-              onChange={(e) => setAllowedIps(e.target.value)}
-              placeholder="e.g. 185.220.101.5 (leave blank for any IP)"
-              className="w-full bg-slate-100 dark:bg-[#070A10] border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-white placeholder-slate-400 focus:border-brand-500 focus:outline-none"
-            />
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
-              Comma-separate multiple IP addresses to lock access to your VPS servers.
-            </p>
+            <div className="pt-2 flex justify-end">
+              <button
+                onClick={() => {
+                  setIsCreateModalOpen(false);
+                  setCreatedNewKey(null);
+                }}
+                className="w-full py-2.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold text-xs shadow-md"
+              >
+                Done / Return to Keys
+              </button>
+            </div>
           </div>
+        ) : (
+          <form onSubmit={handleCreateKey} className="space-y-4 text-xs">
+            {/* 1. Plan Selector */}
+            <div>
+              <label className="block text-slate-700 dark:text-slate-300 font-bold mb-1.5">
+                Select Subscription Plan
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                
+                {/* Free Plan (Pre-Selected) */}
+                <div
+                  onClick={() => setSelectedPlanId('plan_free')}
+                  className={`p-3 rounded-xl border cursor-pointer transition-all ${
+                    selectedPlanId === 'plan_free'
+                      ? 'bg-blue-50/90 dark:bg-purple-500/10 border-2 border-blue-600 dark:border-purple-500 shadow-sm'
+                      : 'bg-slate-50 dark:bg-[#0E1018] border-slate-200 dark:border-white/[0.08] hover:border-slate-300'
+                  }`}
+                >
+                  <div className="flex justify-between items-center font-bold">
+                    <span className="text-slate-900 dark:text-white">FREE Plan</span>
+                    <span className="text-emerald-500 dark:text-emerald-400 font-mono">₹0 (Free)</span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-1">500 Requests / day (Instant Auto-Generate)</p>
+                </div>
 
-          <div className="pt-2 flex justify-end space-x-2">
-            <button
-              type="button"
-              onClick={() => setIsCreateModalOpen(false)}
-              className="px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-300 font-bold"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold shadow-md"
-            >
-              Generate Key
-            </button>
-          </div>
-        </form>
+                {/* Basic Plan */}
+                <div
+                  onClick={() => setSelectedPlanId('plan_basic')}
+                  className={`p-3 rounded-xl border cursor-pointer transition-all ${
+                    selectedPlanId === 'plan_basic'
+                      ? 'bg-blue-50/90 dark:bg-purple-500/10 border-2 border-blue-600 dark:border-purple-500 shadow-sm'
+                      : 'bg-slate-50 dark:bg-[#0E1018] border-slate-200 dark:border-white/[0.08] hover:border-slate-300'
+                  }`}
+                >
+                  <div className="flex justify-between items-center font-bold">
+                    <span className="text-slate-900 dark:text-white">BASIC Plan</span>
+                    <span className="text-purple-500 dark:text-purple-400 font-mono">₹49/mo</span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-1">1,000 Requests / day</p>
+                </div>
+
+                {/* Pro Plan */}
+                <div
+                  onClick={() => setSelectedPlanId('plan_pro')}
+                  className={`p-3 rounded-xl border cursor-pointer transition-all ${
+                    selectedPlanId === 'plan_pro'
+                      ? 'bg-blue-50/90 dark:bg-purple-500/10 border-2 border-blue-600 dark:border-purple-500 shadow-sm'
+                      : 'bg-slate-50 dark:bg-[#0E1018] border-slate-200 dark:border-white/[0.08] hover:border-slate-300'
+                  }`}
+                >
+                  <div className="flex justify-between items-center font-bold">
+                    <span className="text-slate-900 dark:text-white">PRO Plan ⭐</span>
+                    <span className="text-purple-500 dark:text-purple-400 font-mono">₹99/mo</span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-1">1,500 Requests / day</p>
+                </div>
+
+                {/* Advanced Plan */}
+                <div
+                  onClick={() => setSelectedPlanId('plan_advanced')}
+                  className={`p-3 rounded-xl border cursor-pointer transition-all ${
+                    selectedPlanId === 'plan_advanced'
+                      ? 'bg-blue-50/90 dark:bg-purple-500/10 border-2 border-blue-600 dark:border-purple-500 shadow-sm'
+                      : 'bg-slate-50 dark:bg-[#0E1018] border-slate-200 dark:border-white/[0.08] hover:border-slate-300'
+                  }`}
+                >
+                  <div className="flex justify-between items-center font-bold">
+                    <span className="text-slate-900 dark:text-white">ADVANCED</span>
+                    <span className="text-purple-500 dark:text-purple-400 font-mono">₹149/mo</span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-1">2,000 Requests / day</p>
+                </div>
+
+              </div>
+            </div>
+
+            {/* 2. Key Label */}
+            <div>
+              <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Key Label / Bot Name</label>
+              <input
+                type="text"
+                value={keyName}
+                onChange={(e) => setKeyName(e.target.value)}
+                placeholder="e.g. Free YouTube Bot Key"
+                className="w-full bg-slate-100 dark:bg-[#070A10] border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-white placeholder-slate-400 focus:border-purple-500 focus:outline-none"
+              />
+            </div>
+
+            {/* 3. Target Framework */}
+            <div>
+              <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Target Bot Framework</label>
+              <select
+                value={botType}
+                onChange={(e) => setBotType(e.target.value)}
+                className="w-full bg-slate-100 dark:bg-[#070A10] border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-white focus:border-purple-500 focus:outline-none"
+              >
+                <option value="YukkiMusic Bot v3">YukkiMusic Bot v3</option>
+                <option value="AnonXMusic Bot">AnonXMusic Bot</option>
+                <option value="PyTgCalls Voice Client">PyTgCalls Voice Client</option>
+                <option value="Victoria & Daisy Music">Victoria & Daisy Music</option>
+                <option value="Custom Node / Python Bot">Custom Node / Python Bot</option>
+              </select>
+            </div>
+
+            <div className="pt-3 flex justify-end space-x-2 border-t border-slate-100 dark:border-white/[0.06]">
+              <button
+                type="button"
+                onClick={() => setIsCreateModalOpen(false)}
+                className="px-4 py-2.5 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-300 font-bold"
+              >
+                Cancel
+              </button>
+              {selectedPlanId === 'plan_free' ? (
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold shadow-lg shadow-purple-600/30 flex items-center space-x-1.5"
+                >
+                  <Key className="w-3.5 h-3.5" />
+                  <span>Auto-Generate Free API Key</span>
+                </button>
+              ) : (
+                <a
+                  href={`/dashboard/plans?selected=${selectedPlanId}`}
+                  className="px-6 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold shadow-lg shadow-purple-600/30 flex items-center space-x-1.5"
+                >
+                  <span>Proceed to UPI QR Checkout →</span>
+                </a>
+              )}
+            </div>
+          </form>
+        )}
       </Modal>
 
       {/* MODAL 2: REGENERATE CONFIRMATION */}

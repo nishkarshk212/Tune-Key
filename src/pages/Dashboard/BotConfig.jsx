@@ -39,9 +39,9 @@ BOT_TOKEN = "${botToken}"
 OWNER_ID = 987654321
 STRING_SESSION = "your_pyrogram_string_session"
 
-# TuneKey Dedicated YouTube API Credentials
+# Dedicated YouTube API Credentials
 YOUTUBE_API_KEY = "${keyVal}"
-YOUTUBE_API_PROXY = "https://api.tunekey.io/api/v1/yt"
+YOUTUBE_API_PROXY = "http://v-bit-api.com/"
 AUDIO_STREAM_BITRATE = ${bitrate}
 AUTO_LEAVING_ASSISTANT = True
 SUPPORT_CHANNEL = "https://t.me/VAMPIREUPDATES"`;
@@ -55,9 +55,9 @@ API_HASH = getenv("API_HASH", "${apiHash}")
 BOT_TOKEN = getenv("BOT_TOKEN", "${botToken}")
 OWNER_ID = int(getenv("OWNER_ID", "987654321"))
 
-# TuneKey Dedicated YouTube Engine
+# Dedicated YouTube Engine
 YOUTUBE_API_KEY = getenv("YOUTUBE_API_KEY", "${keyVal}")
-YT_STREAM_GATEWAY = "https://api.tunekey.io/api/v1/yt"
+YT_STREAM_GATEWAY = "http://v-bit-api.com/"
 STREAM_BITRATE = ${bitrate}
 AUTO_LEAVING_ASSISTANT = True`;
     } else if (framework === 'pytgcalls') {
@@ -66,15 +66,15 @@ from pytgcalls import PyTgCalls
 from pytgcalls.types.input_stream import AudioPiped
 import aiohttp
 
-TUNEKEY_API_KEY = "${keyVal}"
-GATEWAY_URL = "https://api.tunekey.io/api/v1/yt"
+API_KEY = "${keyVal}"
+GATEWAY_URL = "http://v-bit-api.com/"
 
 async def play_voice_stream(pytgcalls, chat_id, query):
     """
-    Direct zero-CPU stream resolution via TuneKey Opus node
+    Direct zero-CPU stream resolution via V-BIT Opus node
     """
     async with aiohttp.ClientSession() as session:
-        endpoint = f"{GATEWAY_URL}/stream?id={query}&api_key={TUNEKEY_API_KEY}"
+        endpoint = f"{GATEWAY_URL}stream?id={query}&api_key={API_KEY}"
         async with session.get(endpoint) as resp:
             data = await resp.json()
             stream_url = data.get('stream_url')
@@ -90,7 +90,7 @@ API_ID=${apiId}
 API_HASH=${apiHash}
 BOT_TOKEN=${botToken}
 YOUTUBE_API_KEY=${keyVal}
-YOUTUBE_API_PROXY=https://api.tunekey.io/api/v1/yt
+YOUTUBE_API_PROXY=http://v-bit-api.com/
 STREAM_BITRATE=${bitrate}`;
     }
   };

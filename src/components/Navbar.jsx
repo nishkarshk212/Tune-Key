@@ -42,13 +42,13 @@ export default function Navbar() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
             
-            {/* Logo & Brand: YTKey.io */}
+            {/* Logo & Brand: VBIT-API-STORE */}
             <Link to="/" className="flex items-center space-x-2.5 group">
               <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-tr from-indigo-500 to-purple-600 shadow-md shadow-purple-500/20 group-hover:scale-105 transition-transform">
                 <Key className="w-4 h-4 text-white -rotate-45" />
               </div>
-              <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
-                YTKey<span className="text-purple-500">.io</span>
+              <span className="text-xl font-black tracking-tight text-slate-900 dark:text-white">
+                VBIT<span className="text-purple-500">-API</span>-STORE
               </span>
             </Link>
 

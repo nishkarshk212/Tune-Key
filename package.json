@@ -1,5 +1,5 @@
 {
-  "name": "tunekey-youtube-api-platform",
+  "name": "vbit-api-store",
   "version": "1.0.0",
   "description": "YouTube API Key Marketplace & Gateway for Telegram Music Bots",
   "main": "server/index.js",

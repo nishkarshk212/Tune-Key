@@ -50,8 +50,8 @@ export default function AdminLayout() {
                 <ShieldCheck className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-sm font-black text-slate-900 dark:text-white">TuneKey Admin</h2>
-                <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold uppercase tracking-wider">Super Administrator</span>
+                <h2 className="text-sm font-black text-slate-900 dark:text-white">VBIT-API-STORE</h2>
+                <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold uppercase tracking-wider">Admin Portal</span>
               </div>
             </div>
           </div>

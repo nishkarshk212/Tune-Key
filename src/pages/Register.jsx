@@ -80,7 +80,7 @@ export default function Register() {
               <Key className="w-5 h-5 -rotate-45" />
             </div>
             <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-              YTKey<span className="text-purple-500">.io</span>
+              VBIT<span className="text-purple-500">-API</span>-STORE
             </span>
           </Link>
           <h2 className="text-xl font-bold text-slate-900 dark:text-white">Create Developer Account</h2>

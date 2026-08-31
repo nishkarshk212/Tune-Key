@@ -112,20 +112,24 @@ export default function LandingPage() {
 
   const faqs = [
     {
-      q: 'Why does my Telegram Music Bot need a dedicated YouTube API key?',
-      a: 'Telegram Music Bots (such as YukkiMusic, AnonX, and PyTgCalls) make thousands of requests to search tracks and resolve audio streams. Free Google API keys hit quota limits within hours (HTTP 429). YTKey.io provides dedicated, high-quota API keys that keep your bots online 24/7 without drops.'
+      q: 'Why do Telegram Music Bots need VBIT-API-STORE?',
+      a: 'Telegram Music Bots (such as YukkiMusic, AnonX, and PyTgCalls) make thousands of requests to search tracks and resolve audio streams. Free Google API keys hit quota limits within hours (HTTP 429). VBIT-API-STORE provides dedicated, high-quota API keys that keep your bots online 24/7 without drops.'
     },
     {
-      q: 'How fast do I get my API key after purchasing?',
-      a: 'Instantly! As soon as payment completes via UPI, Card, or PayPal, your unique API key is automatically generated and added to your dashboard ready to copy into your .env or config file.'
+      q: 'How fast is key delivery after payment?',
+      a: 'Instant and automated! As soon as your checkout completes (via UPI, Card, or PayPal), your high-quota YouTube API key is provisioned immediately in your dashboard.'
     },
     {
-      q: 'Is YTKey.io compatible with YukkiMusic and AnonX bots?',
-      a: 'Yes! YTKey.io is a 100% plug-and-play drop-in replacement. Simply paste your API key in your config.env file under YOUTUBE_API_KEY and restart your bot.'
+      q: 'Is VBIT-API-STORE compatible with YukkiMusic and AnonX bots?',
+      a: 'Yes! VBIT-API-STORE is a 100% plug-and-play drop-in replacement. Simply paste your API key in your config.env file under YOUTUBE_API_KEY and restart your bot.'
     },
     {
-      q: 'Can I regenerate or revoke my key if needed?',
-      a: 'Yes, your user dashboard lets you regenerate, activate, pause, or whitelist IPs on your API keys with 1 click.'
+      q: 'What payment methods do you accept?',
+      a: 'We accept all major payment options: UPI (Google Pay, PhonePe, Paytm), Credit/Debit Cards (Visa, Mastercard, RuPay), and PayPal.'
+    },
+    {
+      q: 'Can I generate multiple API keys under one subscription?',
+      a: 'Yes! Depending on your chosen tier (Pro allows 3 keys, Advanced allows 10 keys, Unlimited offers unlimited keys), you can generate and manage multiple bot instances simultaneously.'
     }
   ];
 
@@ -155,7 +159,7 @@ export default function LandingPage() {
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.1] text-slate-900 dark:text-white">
                 Power Your Telegram <br />
                 Music Bot with <br />
-                <span className="gradient-text-hero">Premium YouTube API</span>
+                <span className="gradient-text-hero">VBIT-API-STORE</span>
               </h1>
 
               {/* Subtitle */}
@@ -299,11 +303,11 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 2. WHY CHOOSE YTKEY.IO SECTION */}
+      {/* 2. WHY CHOOSE VBIT-API-STORE SECTION */}
       <section id="features" className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
-            Why Choose YTKey.io?
+            Why Choose VBIT-API-STORE?
           </h2>
         </div>
 

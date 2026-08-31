@@ -126,7 +126,7 @@ export default function SignInModal({ isOpen, onClose, defaultTab = 'signin' }) 
           </div>
           <div>
             <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-              {tab === 'signin' ? 'Sign in to YTKey.io' : 'Create Developer Account'}
+              {tab === 'signin' ? 'Sign in to VBIT-API-STORE' : 'Create Developer Account'}
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               Access your YouTube API keys and dashboard

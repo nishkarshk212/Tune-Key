@@ -1,11 +1,12 @@
-# Tune-Key (YTKey.io)
+# VBIT-API-STORE
 
-**YTKey.io / TuneKey API** is a full-stack SaaS platform and high-speed API gateway designed specifically for **Telegram Music Bots** (*YukkiMusic*, *AnonXMusic*, *PyTgCalls*, *Victoria*, etc.) to purchase, manage, monitor, and generate dedicated, high-quota YouTube API keys with direct Opus audio streaming relays and anti-429 ban protection.
+**VBIT-API-STORE** is a full-stack SaaS platform and high-speed API gateway designed specifically for **Telegram Music Bots** (*YukkiMusic*, *AnonXMusic*, *PyTgCalls*, *Victoria*, etc.) to purchase, manage, monitor, and generate dedicated, high-quota YouTube API keys with direct Opus audio streaming relays and anti-429 ban protection.
 
 ---
 
 ## 🌟 Key Features
 
+- **Store Name**: **`VBIT-API-STORE`**
 - **Dynamic Landing Page**: Modern dark obsidian aesthetics, purple gradient glows, 3D holographic hero pedestal, 5-card feature grid, and transparent 4-tier pricing matrix.
 - **Interactive Global Sign-In Panel**: 1-click Google sign-in, demo credentials, and direct dashboard transitions.
 - **User Dashboard**:
@@ -43,5 +44,5 @@ Open **`http://localhost:5000`** in your browser.
 
 | Role | Email | Password |
 |---|---|---|
-| **Demo User** | `demo@ytkey.io` | `Demo@1234` |
-| **Super Admin** | `admin@ytkey.io` | `Admin@1234` |
+| **Demo User** | `demo@vbit-api-store.com` | `Demo@1234` |
+| **Super Admin** | `admin@vbit-api-store.com` | `Admin@1234` |

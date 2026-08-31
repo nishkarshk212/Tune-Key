@@ -11,11 +11,11 @@ export default function Footer() {
           {/* Brand Col */}
           <div className="md:col-span-2 space-y-4">
             <div className="flex items-center space-x-2.5">
-              <div className="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center text-white shadow-lg">
-                <Radio className="w-4 h-4" />
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg">
+                <Key className="w-4 h-4 text-white -rotate-45" />
               </div>
-              <span className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
-                TuneKey<span className="text-brand-500">.API</span>
+              <span className="text-xl font-black text-slate-900 dark:text-white tracking-tight">
+                VBIT<span className="text-purple-500">-API</span>-STORE
               </span>
             </div>
             <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed max-w-sm">
@@ -97,7 +97,7 @@ export default function Footer() {
         </div>
 
         <div className="mt-12 pt-6 border-t border-slate-200 dark:border-slate-800/80 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500">
-          <p>© 2026 TuneKey API Platform. Engineered for Telegram Voice Chat Music Bots.</p>
+          <p>© 2026 VBIT-API-STORE. Engineered for Telegram Voice Chat Music Bots.</p>
           <div className="flex items-center space-x-4 mt-4 sm:mt-0">
             <span className="hover:text-slate-700 dark:hover:text-slate-400 transition-colors cursor-pointer">Privacy Policy</span>
             <span>•</span>

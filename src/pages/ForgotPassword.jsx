@@ -64,8 +64,8 @@ export default function ForgotPassword() {
             <div className="w-10 h-10 rounded-xl bg-brand-600 flex items-center justify-center text-white shadow-lg">
               <Radio className="w-5 h-5" />
             </div>
-            <span className="text-2xl font-black text-white tracking-tight">
-              TuneKey<span className="text-brand-500">.API</span>
+            <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+              VBIT<span className="text-purple-500">-API</span>-STORE
             </span>
           </Link>
           <h2 className="text-xl font-bold text-white mt-4">Password Recovery</h2>

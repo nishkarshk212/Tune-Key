@@ -65,13 +65,13 @@ export default function DashboardLayout() {
       <aside className="hidden lg:flex w-64 bg-white dark:bg-[#0D0E15] border-r border-slate-200 dark:border-white/[0.06] flex-col justify-between p-5 flex-shrink-0">
         <div>
           
-          {/* Logo: YTKey.io */}
+          {/* Logo: VBIT-API-STORE */}
           <Link to="/" className="flex items-center space-x-2.5 px-2 py-1 group">
             <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-tr from-indigo-500 to-purple-600 shadow-md shadow-purple-500/20">
               <Key className="w-4 h-4 text-white -rotate-45" />
             </div>
-            <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
-              YTKey<span className="text-purple-500">.io</span>
+            <span className="text-xl font-black tracking-tight text-slate-900 dark:text-white">
+              VBIT<span className="text-purple-500">-API</span>-STORE
             </span>
           </Link>
 
@@ -152,8 +152,8 @@ export default function DashboardLayout() {
             >
               {mobileSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
-            <Link to="/" className="text-lg font-bold text-white">
-              YTKey<span className="text-purple-500">.io</span>
+            <Link to="/" className="text-lg font-black text-white">
+              VBIT<span className="text-purple-500">-API</span>-STORE
             </Link>
           </div>
 
@@ -325,7 +325,7 @@ export default function DashboardLayout() {
               Ready to leave?
             </h3>
             <p className="text-slate-500 dark:text-slate-400 mt-1">
-              Are you sure you want to sign out of your <strong>YTKey.io</strong> dashboard?
+              Are you sure you want to sign out of your <strong>VBIT-API-STORE</strong> dashboard?
             </p>
           </div>
 

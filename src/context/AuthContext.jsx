@@ -6,13 +6,32 @@ const AuthContext = createContext();
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     try {
+      // 1. Intercept URL search params if redirected from Google OAuth
+      if (typeof window !== 'undefined' && window.location.search) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlToken = urlParams.get('token');
+        const urlUser = urlParams.get('user');
+
+        if (urlToken && urlUser) {
+          const parsedUser = JSON.parse(decodeURIComponent(urlUser));
+          localStorage.setItem('tunekey_token', urlToken);
+          localStorage.setItem('tunekey_user', JSON.stringify(parsedUser));
+          // Clean the query parameters from URL bar without reloading
+          window.history.replaceState({}, document.title, window.location.pathname);
+          return parsedUser;
+        }
+      }
+
+      // 2. Otherwise load from local storage
       const stored = localStorage.getItem('tunekey_user');
       return stored ? JSON.parse(stored) : null;
-    } catch {
+    } catch (e) {
+      console.error('Error initializing user from storage / URL:', e);
       return null;
     }
   });
-  const [loading, setLoading] = useState(true);
+
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('tunekey_token');
@@ -25,11 +44,8 @@ export function AuthProvider({ children }) {
           }
         })
         .catch(() => {
-          logout();
-        })
-        .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
+          // Keep current state if offline or token still active
+        });
     }
   }, []);
 

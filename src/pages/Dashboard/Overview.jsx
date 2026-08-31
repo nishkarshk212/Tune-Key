@@ -161,7 +161,7 @@ export default function Overview() {
       <div>
         <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Dashboard</h1>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-          Welcome back, {user?.name || 'Nishkarsh'}! Here's your API overview.
+          Welcome back, {user?.name || user?.email || 'Developer'}! Here's your API overview.
         </p>
       </div>
 

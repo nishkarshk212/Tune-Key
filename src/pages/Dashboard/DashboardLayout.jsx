@@ -192,8 +192,8 @@ export default function DashboardLayout() {
                   className="w-8 h-8 rounded-full object-cover border border-purple-500/40"
                 />
                 <div className="hidden sm:block text-left">
-                  <p className="text-xs font-bold text-slate-900 dark:text-white leading-tight">
-                    {user?.name || 'Nishkarsh'}
+                  <p className="text-xs font-bold text-slate-900 dark:text-white leading-tight truncate max-w-[140px]">
+                    {user?.name || user?.email?.split('@')[0] || 'Developer'}
                   </p>
                   <p className="text-[10px] text-purple-400 font-medium">Premium User</p>
                 </div>

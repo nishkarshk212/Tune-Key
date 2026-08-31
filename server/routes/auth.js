@@ -208,9 +208,9 @@ router.get('/google/callback', async (req, res) => {
     const jwtToken = generateToken(user);
     const { password_hash, ...safeUser } = user;
 
-    // Redirect to frontend with auth payload
+    // Redirect directly to Dashboard with signed-in Google user payload
     const userEncoded = encodeURIComponent(JSON.stringify(safeUser));
-    return res.redirect(`/login?token=${jwtToken}&user=${userEncoded}`);
+    return res.redirect(`/dashboard?token=${jwtToken}&user=${userEncoded}`);
   } catch (err) {
     console.error('Google Callback Error:', err);
     return res.redirect('/login?error=Google authentication process failed.');

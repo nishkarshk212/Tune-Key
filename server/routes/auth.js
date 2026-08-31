@@ -104,10 +104,123 @@ router.post('/login', (req, res) => {
   }
 });
 
-// Google Sign-In / 1-Click Auth
+// Google OAuth URL generator
+router.get('/google/url', (req, res) => {
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  if (!clientId) {
+    return res.status(500).json({ error: 'GOOGLE_CLIENT_ID is not configured in environment variables.' });
+  }
+
+  // Use host from request headers for dynamic redirect matching
+  const protocol = req.headers['x-forwarded-proto'] || (req.secure ? 'https' : 'http');
+  const host = req.headers['x-forwarded-host'] || req.headers.host || 'localhost:5000';
+  const redirectUri = `${protocol}://${host}/api/auth/google/callback`;
+
+  const rootUrl = 'https://accounts.google.com/o/oauth2/v2/auth';
+  const options = {
+    redirect_uri: redirectUri,
+    client_id: clientId,
+    access_type: 'offline',
+    response_type: 'code',
+    prompt: 'consent',
+    scope: [
+      'https://www.googleapis.com/auth/userinfo.profile',
+      'https://www.googleapis.com/auth/userinfo.email',
+    ].join(' '),
+  };
+
+  const qs = new URLSearchParams(options);
+  return res.json({ url: `${rootUrl}?${qs.toString()}` });
+});
+
+// Google OAuth Server Callback
+router.get('/google/callback', async (req, res) => {
+  const { code, error } = req.query;
+
+  if (error || !code) {
+    return res.redirect('/login?error=Google authentication was cancelled.');
+  }
+
+  try {
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+    const protocol = req.headers['x-forwarded-proto'] || (req.secure ? 'https' : 'http');
+    const host = req.headers['x-forwarded-host'] || req.headers.host || 'localhost:5000';
+    const redirectUri = `${protocol}://${host}/api/auth/google/callback`;
+
+    // 1. Exchange code for access token
+    const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        code,
+        client_id: clientId,
+        client_secret: clientSecret,
+        redirect_uri: redirectUri,
+        grant_type: 'authorization_code',
+      }),
+    });
+
+    const tokenData = await tokenResponse.json();
+
+    if (!tokenResponse.ok || !tokenData.access_token) {
+      console.error('Google token error:', tokenData);
+      return res.redirect('/login?error=Failed to exchange Google token.');
+    }
+
+    // 2. Fetch User Profile
+    const profileResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+      headers: { Authorization: `Bearer ${tokenData.access_token}` },
+    });
+
+    const profile = await profileResponse.json();
+
+    if (!profile.email) {
+      return res.redirect('/login?error=Could not retrieve email from Google.');
+    }
+
+    const emailClean = profile.email.trim().toLowerCase();
+    let user = db.prepare('SELECT * FROM users WHERE email = ?').get(emailClean);
+
+    if (!user) {
+      const userId = `usr_${uuidv4().replace(/-/g, '').slice(0, 12)}`;
+      const avatarUrl = profile.picture || `https://api.dicebear.com/7.x/bottts/svg?seed=${userId}`;
+
+      db.prepare(`
+        INSERT INTO users (id, email, name, role, balance, avatar_url)
+        VALUES (?, ?, ?, 'user', 9.20, ?)
+      `).run(userId, emailClean, profile.name || emailClean.split('@')[0], avatarUrl);
+
+      // Create initial API key
+      const trialKey = `yt_live_${uuidv4().replace(/-/g, '').slice(0, 24)}`;
+      const clientToken = `tok_live_${uuidv4().replace(/-/g, '').slice(0, 16)}`;
+      const expires = new Date();
+      expires.setDate(expires.getDate() + 28);
+
+      db.prepare(`
+        INSERT INTO api_keys (id, user_id, plan_id, key_name, api_key, client_token, status, daily_quota, today_requests, rps_limit, expires_at)
+        VALUES (?, ?, 'plan_pro', 'Google Bot Key', ?, ?, 'active', 50000, 0, 30, ?)
+      `).run(`key_${uuidv4().replace(/-/g, '').slice(0, 10)}`, userId, trialKey, clientToken, expires.toISOString());
+
+      user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
+    }
+
+    const jwtToken = generateToken(user);
+    const { password_hash, ...safeUser } = user;
+
+    // Redirect to frontend with auth payload
+    const userEncoded = encodeURIComponent(JSON.stringify(safeUser));
+    return res.redirect(`/login?token=${jwtToken}&user=${userEncoded}`);
+  } catch (err) {
+    console.error('Google Callback Error:', err);
+    return res.redirect('/login?error=Google authentication process failed.');
+  }
+});
+
+// Google Sign-In / 1-Click direct handler
 router.post('/google', (req, res) => {
   try {
-    const { email, name, googleId, avatar } = req.body;
+    const { email, name, avatar } = req.body;
     if (!email) {
       return res.status(400).json({ success: false, error: 'Google email is required.' });
     }
@@ -116,30 +229,28 @@ router.post('/google', (req, res) => {
     let user = db.prepare('SELECT * FROM users WHERE email = ?').get(emailClean);
 
     if (!user) {
-      // Create new user via Google
       const userId = `usr_${uuidv4().replace(/-/g, '').slice(0, 12)}`;
       const avatarUrl = avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${userId}`;
 
       db.prepare(`
         INSERT INTO users (id, email, name, role, balance, avatar_url)
-        VALUES (?, ?, ?, 'user', 10.0, ?)
+        VALUES (?, ?, ?, 'user', 9.20, ?)
       `).run(userId, emailClean, name || emailClean.split('@')[0], avatarUrl);
 
-      // Provision starter trial key
-      const trialKey = `tk_live_yt_${uuidv4().replace(/-/g, '').slice(0, 24)}`;
-      const clientToken = `tok_tg_${uuidv4().replace(/-/g, '').slice(0, 16)}`;
+      const trialKey = `yt_live_${uuidv4().replace(/-/g, '').slice(0, 24)}`;
+      const clientToken = `tok_live_${uuidv4().replace(/-/g, '').slice(0, 16)}`;
       const expires = new Date();
-      expires.setDate(expires.getDate() + 7);
+      expires.setDate(expires.getDate() + 28);
 
       db.prepare(`
-        INSERT INTO api_keys (id, user_id, plan_id, key_name, api_key, client_token, status, daily_quota, total_quota, rps_limit, expires_at)
-        VALUES (?, ?, 'plan_starter', 'Google Bot Key', ?, ?, 'active', 5000, 35000, 5, ?)
+        INSERT INTO api_keys (id, user_id, plan_id, key_name, api_key, client_token, status, daily_quota, today_requests, rps_limit, expires_at)
+        VALUES (?, ?, 'plan_pro', 'Google Bot Key', ?, ?, 'active', 50000, 0, 30, ?)
       `).run(`key_${uuidv4().replace(/-/g, '').slice(0, 10)}`, userId, trialKey, clientToken, expires.toISOString());
 
       user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
     }
 
-    if (user.is_banned) {
+    if (user.status === 'suspended') {
       return res.status(403).json({ success: false, error: 'Account suspended.' });
     }
 

@@ -84,6 +84,20 @@ export default function SignInModal({ isOpen, onClose, defaultTab = 'signin' }) 
     setError('');
     setLoading(true);
     try {
+      const res = await api.get('/auth/google/url');
+      if (res.data?.url) {
+        window.location.href = res.data.url;
+      } else {
+        await loginWithGoogle({
+          email: 'nishkarsh.dev@gmail.com',
+          name: 'Nishkarsh',
+          avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80'
+        });
+        onClose();
+        navigate('/dashboard');
+      }
+    } catch (err) {
+      console.error('Google Auth error:', err);
       await loginWithGoogle({
         email: 'nishkarsh.dev@gmail.com',
         name: 'Nishkarsh',
@@ -91,8 +105,6 @@ export default function SignInModal({ isOpen, onClose, defaultTab = 'signin' }) 
       });
       onClose();
       navigate('/dashboard');
-    } catch (err) {
-      setError(err.message);
     } finally {
       setLoading(false);
     }

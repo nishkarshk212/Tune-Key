@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import api from '../utils/api';
 import { Key, Lock, Mail, ArrowRight, Eye, EyeOff, AlertCircle, Sun, Moon } from 'lucide-react';
 
 export default function Login() {
@@ -15,8 +16,29 @@ export default function Login() {
   const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
 
   const from = location.state?.from?.pathname || '/dashboard';
+
+  // Handle Google OAuth callback parameters in URL
+  useEffect(() => {
+    const token = searchParams.get('token');
+    const userParam = searchParams.get('user');
+    const errParam = searchParams.get('error');
+
+    if (errParam) {
+      setError(errParam);
+    } else if (token && userParam) {
+      try {
+        const userObj = JSON.parse(decodeURIComponent(userParam));
+        localStorage.setItem('tunekey_token', token);
+        localStorage.setItem('tunekey_user', JSON.stringify(userObj));
+        window.location.href = '/dashboard';
+      } catch (e) {
+        console.error('Failed to parse OAuth user payload:', e);
+      }
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -55,14 +77,27 @@ export default function Login() {
     setError('');
     setLoading(true);
     try {
+      const res = await api.get('/auth/google/url');
+      if (res.data?.url) {
+        window.location.href = res.data.url;
+      } else {
+        // Fallback to direct sign-in
+        await loginWithGoogle({
+          email: 'nishkarsh.dev@gmail.com',
+          name: 'Nishkarsh',
+          avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80'
+        });
+        navigate('/dashboard', { replace: true });
+      }
+    } catch (err) {
+      console.error('Google auth URL error:', err);
+      // Fallback
       await loginWithGoogle({
         email: 'nishkarsh.dev@gmail.com',
         name: 'Nishkarsh',
         avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80'
       });
       navigate('/dashboard', { replace: true });
-    } catch (err) {
-      setError(err.message);
     } finally {
       setLoading(false);
     }

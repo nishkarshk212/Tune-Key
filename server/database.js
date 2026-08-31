@@ -77,12 +77,18 @@ export function initDatabase() {
       rps_limit INTEGER DEFAULT 5,
       allowed_ips TEXT,
       expires_at DATETIME,
+      last_used_at DATETIME,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
       FOREIGN KEY (plan_id) REFERENCES plans (id)
     );
   `);
+
+  // Key safety migrations
+  try { db.exec("ALTER TABLE api_keys ADD COLUMN last_used_at DATETIME;"); } catch(e){}
+  try { db.exec("ALTER TABLE api_keys ADD COLUMN bot_type TEXT DEFAULT 'YukkiMusic Bot v3';"); } catch(e){}
+  try { db.exec("ALTER TABLE api_keys ADD COLUMN allowed_ips TEXT;"); } catch(e){}
 
   // 4. Usage Logs Table
   db.exec(`

@@ -208,8 +208,56 @@ router.post('/razorpay/verify', authenticateToken, async (req, res) => {
     });
   } catch (error) {
     console.error('Razorpay Verify Error:', error);
-    return res.status(500).json({ success: false, error: error.message || 'Payment verification failed' });
+// 4. Submit Manual UPI QR Payment with UTR Reference Number
+router.post('/manual/submit-utr', authenticateToken, async (req, res) => {
+  try {
+    const { planId, utrNumber, amount, botName } = req.body;
+    const userId = req.user.id;
+
+    if (!planId || !utrNumber || !amount) {
+      return res.status(400).json({ success: false, error: 'Plan, UTR / Transaction ID, and amount are required.' });
+    }
+
+    const cleanUtr = utrNumber.toString().trim();
+    if (cleanUtr.length < 6) {
+      return res.status(400).json({ success: false, error: 'Please enter a valid 12-digit UTR or Transaction Reference number.' });
+    }
+
+    // Check for duplicate UTR submission
+    const existingOrder = db.prepare('SELECT id FROM orders WHERE transaction_id = ?').get(cleanUtr);
+    if (existingOrder) {
+      return res.status(400).json({ success: false, error: 'This UTR / Transaction ID has already been submitted.' });
+    }
+
+    const plan = db.prepare('SELECT * FROM plans WHERE id = ?').get(planId);
+    if (!plan) {
+      return res.status(404).json({ success: false, error: 'Associated plan not found.' });
+    }
+
+    const orderId = `ord_utr_${uuidv4().replace(/-/g, '').slice(0, 10)}`;
+
+    db.prepare(`
+      INSERT INTO orders (
+        id, user_id, plan_id, amount, currency, payment_method, payment_status, transaction_id
+      ) VALUES (?, ?, ?, ?, 'INR', 'UPI QR (Paytm)', 'pending_verification', ?)
+    `).run(orderId, userId, plan.id, parseFloat(amount), cleanUtr);
+
+    return res.status(201).json({
+      success: true,
+      message: 'Payment details submitted successfully! The admin will verify your UTR and activate your API Key.',
+      order: {
+        id: orderId,
+        utr: cleanUtr,
+        amount: parseFloat(amount),
+        planName: plan.name,
+        status: 'pending_verification'
+      }
+    });
+  } catch (error) {
+    console.error('Manual UTR submit error:', error);
+    return res.status(500).json({ success: false, error: 'Failed to submit payment verification.' });
   }
 });
 
 export default router;
+

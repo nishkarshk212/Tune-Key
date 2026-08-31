@@ -31,9 +31,9 @@ export default function AdminLayout() {
 
   const navItems = [
     { label: 'Admin Overview', path: '/admin', icon: Activity },
+    { label: 'UTR & Orders Approval', path: '/admin/orders', icon: Receipt },
     { label: 'User Accounts', path: '/admin/users', icon: Users },
     { label: 'Global API Keys', path: '/admin/keys', icon: Key },
-    { label: 'Orders & Payments', path: '/admin/orders', icon: Receipt },
     { label: 'Live Traffic Logs', path: '/admin/logs', icon: Terminal },
   ];
 
@@ -109,7 +109,7 @@ export default function AdminLayout() {
           <div className="flex items-center space-x-2.5">
             <span className="w-2 h-2 rounded-full bg-amber-500 dark:bg-amber-400 animate-pulse"></span>
             <h1 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">
-              TuneKey SaaS Administration Control Unit
+              VBIT-API-STORE Administration Control Unit
             </h1>
           </div>
 

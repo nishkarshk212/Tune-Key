@@ -78,7 +78,7 @@ export default function AdminDashboard() {
             <DollarSign className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
           </div>
           <div className="mt-3">
-            <span className="text-2xl font-black text-slate-900 dark:text-white font-mono">${stats.totalRevenue?.toFixed(2) || '0.00'}</span>
+            <span className="text-2xl font-black text-slate-900 dark:text-white font-mono">₹{stats.totalRevenue?.toLocaleString() || '0'}</span>
           </div>
           <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold mt-2">● +18.4% this week</p>
         </div>

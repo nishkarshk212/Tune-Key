@@ -273,27 +273,6 @@ export default function SignInModal({ isOpen, onClose, defaultTab = 'signin' }) 
           </button>
         </form>
 
-        {/* Quick Demo Access Bar */}
-        <div className="pt-4 border-t border-slate-200 dark:border-white/[0.06] space-y-2 text-center">
-          <p className="text-[11px] font-semibold text-slate-500">Quick 1-Click Demo Login:</p>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => handleDemoSignIn('user')}
-              className="py-2 px-3 rounded-xl bg-slate-100 dark:bg-[#161924] hover:bg-slate-200 dark:hover:bg-[#1e2232] text-slate-900 dark:text-white text-[11px] font-bold border border-slate-200 dark:border-white/[0.06] transition-all"
-            >
-              Demo User (Nishkarsh)
-            </button>
-            <button
-              type="button"
-              onClick={() => handleDemoSignIn('admin')}
-              className="py-2 px-3 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 text-[11px] font-bold border border-amber-500/20 transition-all"
-            >
-              Super Admin Portal
-            </button>
-          </div>
-        </div>
-
       </div>
     </Modal>
   );

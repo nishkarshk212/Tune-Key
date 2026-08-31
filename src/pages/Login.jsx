@@ -219,27 +219,6 @@ export default function Login() {
             </button>
           </form>
 
-          {/* Quick Demo Test Buttons */}
-          <div className="pt-4 border-t border-slate-200 dark:border-white/[0.06] space-y-2 text-center">
-            <p className="text-[11px] font-semibold text-slate-500">Quick 1-Click Demo Accounts:</p>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => handleDemoLogin('user')}
-                className="py-2 px-3 rounded-xl bg-slate-100 dark:bg-[#161924] hover:bg-slate-200 dark:hover:bg-[#1e2232] text-slate-900 dark:text-white text-[11px] font-bold border border-slate-200 dark:border-white/[0.06] transition-colors"
-              >
-                Demo User (Nishkarsh)
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDemoLogin('admin')}
-                className="py-2 px-3 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 text-[11px] font-bold border border-amber-500/20 transition-colors"
-              >
-                Super Admin Portal
-              </button>
-            </div>
-          </div>
-
           <div className="text-center text-xs text-slate-500">
             Don't have an account?{' '}
             <Link to="/register" className="text-purple-400 font-bold hover:underline">

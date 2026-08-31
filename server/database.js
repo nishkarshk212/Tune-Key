@@ -131,37 +131,21 @@ function seedData() {
   const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get();
   if (userCount.count === 0) {
     const salt = bcrypt.genSaltSync(10);
-    const adminPassword = bcrypt.hashSync('Admin@1234', salt);
-    const demoPassword = bcrypt.hashSync('Demo@1234', salt);
+    const adminPassword = bcrypt.hashSync(process.env.ADMIN_PASSWORD || 'Admin@Vbit2026', salt);
 
-    // Seed Admin
+    // Seed Super Admin
     db.prepare(`
       INSERT INTO users (id, email, password_hash, name, role, balance, status, avatar_url)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       'usr_admin_001',
-      'admin@ytkey.io',
+      'admin@vbitapistore.com',
       adminPassword,
       'Super Admin',
       'admin',
-      500.00,
+      1000.00,
       'active',
       'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'
-    );
-
-    // Seed Nishkarsh (Demo User)
-    db.prepare(`
-      INSERT INTO users (id, email, password_hash, name, role, balance, status, avatar_url)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
-      'usr_demo_001',
-      'demo@ytkey.io',
-      demoPassword,
-      'Nishkarsh',
-      'user',
-      9.20,
-      'active',
-      'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80'
     );
   }
 
@@ -252,77 +236,6 @@ function seedData() {
 
   for (const p of plans) {
     insertPlan.run(p);
-  }
-
-  // Seed sample keys for Nishkarsh
-  const keyCount = db.prepare('SELECT COUNT(*) as count FROM api_keys').get();
-  if (keyCount.count === 0) {
-    const insertKey = db.prepare(`
-      INSERT INTO api_keys (id, user_id, plan_id, key_name, api_key, client_token, status, bot_type, daily_quota, today_requests, used_quota, rps_limit, expires_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', '+28 days'))
-    `);
-
-    insertKey.run(
-      'key_demo_001',
-      'usr_demo_001',
-      'plan_pro',
-      'Main Bot Key',
-      'yt_live_7f8a3c9b1e2d4f5a6b7c8d9e0f1a2b3c',
-      'tok_live_c1a89f0e3412',
-      'active',
-      'YukkiMusic Bot v3',
-      50000,
-      12450,
-      348000,
-      30
-    );
-
-    insertKey.run(
-      'key_demo_002',
-      'usr_demo_001',
-      'plan_pro',
-      'Backup Key',
-      'yt_live_9c3b8a1e4f2d5a6b7c8d9e0f1a2b3c4d',
-      'tok_live_d2b90e1f4523',
-      'active',
-      'AnonXMusic Bot',
-      50000,
-      2300,
-      89000,
-      30
-    );
-
-    insertKey.run(
-      'key_demo_003',
-      'usr_demo_001',
-      'plan_pro',
-      'Test Key',
-      'yt_live_a1d94f2e3b5a6c7d8e9f0a1b2c3d4e5f',
-      'tok_live_e3c01f2a5634',
-      'inactive',
-      'PyTgCalls Voice Client',
-      50000,
-      0,
-      14200,
-      30
-    );
-
-    // Seed Sample Orders
-    const insertOrder = db.prepare(`
-      INSERT INTO orders (id, user_id, plan_id, plan_name, amount, payment_method, payment_status, transaction_id)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-
-    insertOrder.run(
-      'ord_9901',
-      'usr_demo_001',
-      'plan_pro',
-      'Pro Plan',
-      9.99,
-      'UPI / Card',
-      'completed',
-      'tx_stripe_9901238'
-    );
   }
 }
 

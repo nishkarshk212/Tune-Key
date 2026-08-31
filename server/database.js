@@ -165,96 +165,93 @@ function seedData() {
     );
   }
 
-  // Always sync seed plans to match YTKey.io mockup
-  const planCount = db.prepare('SELECT COUNT(*) as count FROM plans').get();
-  if (planCount.count === 0) {
-    const plans = [
-      {
-        id: 'plan_basic',
-        name: 'BASIC',
-        tier: 'Basic',
-        price: 4.99,
-        billing_period: 'monthly',
-        daily_quota: 10000,
-        total_quota: 300000,
-        rps_limit: 10,
-        max_keys: 1,
-        features: JSON.stringify([
-          '10,000 Requests / day',
-          '1 API Key',
-          'Standard Support',
-          '99% Uptime'
-        ]),
-        is_popular: 0,
-        is_active: 1
-      },
-      {
-        id: 'plan_pro',
-        name: 'PRO',
-        tier: 'Pro',
-        price: 9.99,
-        billing_period: 'monthly',
-        daily_quota: 50000,
-        total_quota: 1500000,
-        rps_limit: 30,
-        max_keys: 3,
-        features: JSON.stringify([
-          '50,000 Requests / day',
-          '3 API Keys',
-          'Priority Support',
-          '99.9% Uptime'
-        ]),
-        is_popular: 1,
-        is_active: 1
-      },
-      {
-        id: 'plan_advanced',
-        name: 'ADVANCED',
-        tier: 'Advanced',
-        price: 19.99,
-        billing_period: 'monthly',
-        daily_quota: 150000,
-        total_quota: 4500000,
-        rps_limit: 60,
-        max_keys: 10,
-        features: JSON.stringify([
-          '150,000 Requests / day',
-          '10 API Keys',
-          'Priority Support',
-          '99.9% Uptime'
-        ]),
-        is_popular: 0,
-        is_active: 1
-      },
-      {
-        id: 'plan_unlimited',
-        name: 'UNLIMITED',
-        tier: 'Unlimited',
-        price: 39.99,
-        billing_period: 'monthly',
-        daily_quota: 1000000,
-        total_quota: 30000000,
-        rps_limit: 120,
-        max_keys: 999,
-        features: JSON.stringify([
-          'Unlimited Requests',
-          'Unlimited API Keys',
-          'VIP Support',
-          '99.9% Uptime'
-        ]),
-        is_popular: 0,
-        is_active: 1
-      }
-    ];
-
-    const insertPlan = db.prepare(`
-      INSERT OR REPLACE INTO plans (id, name, tier, price, billing_period, daily_quota, total_quota, rps_limit, max_keys, features, is_popular, is_active)
-      VALUES (@id, @name, @tier, @price, @billing_period, @daily_quota, @total_quota, @rps_limit, @max_keys, @features, @is_popular, @is_active)
-    `);
-
-    for (const p of plans) {
-      insertPlan.run(p);
+  // Always sync seed plans with Indian Rupee (INR) pricing and 1 API Key per plan
+  const plans = [
+    {
+      id: 'plan_basic',
+      name: 'BASIC',
+      tier: 'Basic',
+      price: 199,
+      billing_period: 'monthly',
+      daily_quota: 10000,
+      total_quota: 300000,
+      rps_limit: 10,
+      max_keys: 1,
+      features: JSON.stringify([
+        '10,000 Requests / day',
+        '1 Dedicated API Key',
+        'Standard Support',
+        '99% Uptime'
+      ]),
+      is_popular: 0,
+      is_active: 1
+    },
+    {
+      id: 'plan_pro',
+      name: 'PRO',
+      tier: 'Pro',
+      price: 499,
+      billing_period: 'monthly',
+      daily_quota: 50000,
+      total_quota: 1500000,
+      rps_limit: 30,
+      max_keys: 1,
+      features: JSON.stringify([
+        '50,000 Requests / day',
+        '1 Dedicated API Key',
+        'Priority Support',
+        '99.9% Uptime'
+      ]),
+      is_popular: 1,
+      is_active: 1
+    },
+    {
+      id: 'plan_advanced',
+      name: 'ADVANCED',
+      tier: 'Advanced',
+      price: 999,
+      billing_period: 'monthly',
+      daily_quota: 150000,
+      total_quota: 4500000,
+      rps_limit: 60,
+      max_keys: 1,
+      features: JSON.stringify([
+        '150,000 Requests / day',
+        '1 Dedicated API Key',
+        'Priority Support',
+        '99.9% Uptime'
+      ]),
+      is_popular: 0,
+      is_active: 1
+    },
+    {
+      id: 'plan_unlimited',
+      name: 'UNLIMITED',
+      tier: 'Unlimited',
+      price: 1999,
+      billing_period: 'monthly',
+      daily_quota: 1000000,
+      total_quota: 30000000,
+      rps_limit: 120,
+      max_keys: 1,
+      features: JSON.stringify([
+        'Unlimited Requests',
+        '1 Dedicated API Key',
+        'VIP Support',
+        '99.9% Uptime'
+      ]),
+      is_popular: 0,
+      is_active: 1
     }
+  ];
+
+  const insertPlan = db.prepare(`
+    INSERT OR REPLACE INTO plans (id, name, tier, price, billing_period, daily_quota, total_quota, rps_limit, max_keys, features, is_popular, is_active)
+    VALUES (@id, @name, @tier, @price, @billing_period, @daily_quota, @total_quota, @rps_limit, @max_keys, @features, @is_popular, @is_active)
+  `);
+
+  for (const p of plans) {
+    insertPlan.run(p);
   }
 
   // Seed sample keys for Nishkarsh

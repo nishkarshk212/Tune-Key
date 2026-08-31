@@ -143,7 +143,7 @@ export default function Navbar() {
                           <p className="font-semibold text-slate-900 dark:text-white truncate">{user?.email}</p>
                           <div className="mt-1 flex items-center justify-between text-[11px]">
                             <span className="text-slate-500">Balance:</span>
-                            <span className="font-mono text-emerald-500 font-bold">${user?.balance?.toFixed(2) || '9.20'}</span>
+                            <span className="font-mono text-emerald-500 font-bold">₹{user?.balance ? user.balance.toFixed(2) : '500.00'}</span>
                           </div>
                         </div>
 

@@ -134,7 +134,7 @@ export default function Plans() {
                     </div>
 
                     <div className="mt-3 flex items-baseline">
-                      <span className="text-3xl font-black text-slate-900 dark:text-white font-mono">${p.price}</span>
+                      <span className="text-3xl font-black text-slate-900 dark:text-white font-mono">₹{p.price}</span>
                       <span className="text-xs text-slate-500 ml-1">/month</span>
                     </div>
 
@@ -145,7 +145,7 @@ export default function Plans() {
                       </div>
                       <div className="flex items-center space-x-2 text-slate-700 dark:text-slate-300">
                         <Check className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
-                        <span>{p.max_keys} API Key{p.max_keys > 1 ? 's' : ''}</span>
+                        <span>1 Dedicated API Key</span>
                       </div>
                       <div className="flex items-center space-x-2 text-slate-700 dark:text-slate-300">
                         <Check className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
@@ -198,21 +198,21 @@ export default function Plans() {
                   <div>
                     <p className="font-bold text-slate-900 dark:text-white">{selectedPlan.name} Plan</p>
                     <p className="text-[11px] text-slate-500">{selectedPlan.daily_quota?.toLocaleString()} Requests / day</p>
-                    <p className="text-[11px] text-slate-500">{selectedPlan.max_keys} API Keys</p>
+                    <p className="text-[11px] text-slate-500">1 Dedicated API Key</p>
                   </div>
                   <span className="font-mono font-bold text-slate-900 dark:text-white text-sm">
-                    ${selectedPlan.price?.toFixed(2)}
+                    ₹{selectedPlan.price}
                   </span>
                 </div>
 
                 <div className="pt-3 border-t border-slate-100 dark:border-white/[0.06] space-y-1.5">
                   <div className="flex justify-between text-slate-500">
                     <span>Subtotal</span>
-                    <span className="font-mono">${selectedPlan.price?.toFixed(2)}</span>
+                    <span className="font-mono">₹{selectedPlan.price}</span>
                   </div>
                   <div className="flex justify-between text-sm font-bold text-slate-900 dark:text-white pt-1">
                     <span>Total</span>
-                    <span className="font-mono text-purple-400">${selectedPlan.price?.toFixed(2)}</span>
+                    <span className="font-mono text-purple-400">₹{selectedPlan.price}</span>
                   </div>
                 </div>
               </div>
@@ -267,7 +267,7 @@ export default function Plans() {
               {processing ? (
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
               ) : (
-                <span>Pay ${selectedPlan?.price?.toFixed(2)} Securely</span>
+                <span>Pay ₹{selectedPlan?.price} Securely</span>
               )}
             </button>
 

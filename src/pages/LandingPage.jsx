@@ -67,10 +67,10 @@ export default function LandingPage() {
     {
       id: 'plan_basic',
       name: 'BASIC',
-      monthlyPrice: 4.99,
-      yearlyPrice: 3.99,
+      monthlyPrice: 199,
+      yearlyPrice: 159,
       requests: '10,000 Requests / day',
-      keys: '1 API Key',
+      keys: '1 Dedicated API Key',
       support: 'Standard Support',
       uptime: '99% Uptime',
       isPopular: false
@@ -78,10 +78,10 @@ export default function LandingPage() {
     {
       id: 'plan_pro',
       name: 'PRO',
-      monthlyPrice: 9.99,
-      yearlyPrice: 7.99,
+      monthlyPrice: 499,
+      yearlyPrice: 399,
       requests: '50,000 Requests / day',
-      keys: '3 API Keys',
+      keys: '1 Dedicated API Key',
       support: 'Priority Support',
       uptime: '99.9% Uptime',
       isPopular: true
@@ -89,10 +89,10 @@ export default function LandingPage() {
     {
       id: 'plan_advanced',
       name: 'ADVANCED',
-      monthlyPrice: 19.99,
-      yearlyPrice: 15.99,
+      monthlyPrice: 999,
+      yearlyPrice: 799,
       requests: '150,000 Requests / day',
-      keys: '10 API Keys',
+      keys: '1 Dedicated API Key',
       support: 'Priority Support',
       uptime: '99.9% Uptime',
       isPopular: false
@@ -100,10 +100,10 @@ export default function LandingPage() {
     {
       id: 'plan_unlimited',
       name: 'UNLIMITED',
-      monthlyPrice: 39.99,
-      yearlyPrice: 31.99,
+      monthlyPrice: 1999,
+      yearlyPrice: 1599,
       requests: 'Unlimited Requests',
-      keys: 'Unlimited API Keys',
+      keys: '1 Dedicated API Key',
       support: 'VIP Support',
       uptime: '99.9% Uptime',
       isPopular: false
@@ -392,7 +392,7 @@ export default function LandingPage() {
                   {/* Price */}
                   <div className="mt-3 flex items-baseline">
                     <span className="text-3xl font-black text-slate-900 dark:text-white font-mono">
-                      ${price}
+                      ₹{price}
                     </span>
                     <span className="text-xs text-slate-500 ml-1">/month</span>
                   </div>

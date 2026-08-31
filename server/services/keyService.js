@@ -1,14 +1,12 @@
 import crypto from 'crypto';
 import db from '../database.js';
 
+import { generateApiKeyForPlan, generateVBitKey, PLAN_PREFIX_MAP } from '../generate_key.js';
+
+export { generateApiKeyForPlan, generateVBitKey, PLAN_PREFIX_MAP };
+
 export function generateApiKey(prefix = 'v-bit-', length = 32) {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let result = '';
-  const bytes = crypto.randomBytes(length);
-  for (let i = 0; i < length; i++) {
-    result += chars.charAt(bytes[i] % chars.length);
-  }
-  return `${prefix}${result}`;
+  return generateVBitKey(prefix, length);
 }
 
 export function generateClientToken(prefix = 'tok_') {

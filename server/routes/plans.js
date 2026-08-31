@@ -2,7 +2,7 @@ import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import db from '../database.js';
 import { authenticateToken } from '../middleware/auth.js';
-import { generateApiKey, generateClientToken } from '../services/keyService.js';
+import { generateApiKey, generateClientToken, generateApiKeyForPlan } from '../services/keyService.js';
 
 const router = express.Router();
 
@@ -36,18 +36,18 @@ router.post('/checkout', authenticateToken, (req, res) => {
       return res.status(404).json({ success: false, error: 'Selected plan is not available' });
     }
 
-    const method = paymentMethod || 'Credit Card / Stripe';
+    const method = paymentMethod || 'Razorpay / UPI';
     const orderId = `ord_${uuidv4().replace(/-/g, '').slice(0, 10)}`;
     const txnId = `txn_${method.toLowerCase().replace(/[^a-z0-9]/g, '')}_${uuidv4().replace(/-/g, '').slice(0, 14)}`;
 
     // Create Order Record
     db.prepare(`
       INSERT INTO orders (id, user_id, plan_id, amount, currency, payment_method, payment_status, transaction_id)
-      VALUES (?, ?, ?, ?, 'USD', ?, 'completed', ?)
+      VALUES (?, ?, ?, ?, 'INR', ?, 'completed', ?)
     `).run(orderId, userId, plan.id, plan.price, method, txnId);
 
     // Provision new High-Quota API Key for the plan
-    const apiKey = generateApiKey();
+    const apiKey = generateApiKeyForPlan(plan.tier || plan.name);
     const clientToken = generateClientToken();
     const keyId = `key_${uuidv4().replace(/-/g, '').slice(0, 10)}`;
 

@@ -4,7 +4,7 @@ import Razorpay from 'razorpay';
 import { v4 as uuidv4 } from 'uuid';
 import db from '../database.js';
 import { authenticateToken } from '../middleware/auth.js';
-import { generateApiKey, generateClientToken } from '../services/keyService.js';
+import { generateApiKey, generateClientToken, generateApiKeyForPlan } from '../services/keyService.js';
 
 const router = express.Router();
 
@@ -156,7 +156,7 @@ router.post('/razorpay/verify', authenticateToken, async (req, res) => {
     }
 
     // 2. Automatically Provision 1 Dedicated High-Quota YouTube API Key
-    const apiKey = generateApiKey();
+    const apiKey = generateApiKeyForPlan(plan.tier || plan.name);
     const clientToken = generateClientToken();
     const keyId = `key_${uuidv4().replace(/-/g, '').slice(0, 10)}`;
 

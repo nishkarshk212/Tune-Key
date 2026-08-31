@@ -10,6 +10,7 @@ import userRoutes from './routes/user.js';
 import plansRoutes from './routes/plans.js';
 import adminRoutes from './routes/admin.js';
 import ytProxyRoutes from './routes/ytProxy.js';
+import paymentRoutes from './routes/payment.js';
 
 dotenv.config();
 
@@ -38,6 +39,7 @@ app.use((req, res, next) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/plans', plansRoutes);
+app.use('/api/payment', paymentRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/v1/yt', ytProxyRoutes);
 

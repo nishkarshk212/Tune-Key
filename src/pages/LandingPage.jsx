@@ -266,7 +266,7 @@ export default function LandingPage() {
                     </div>
 
                     {/* Pedestal Base Ring */}
-                    <div className="mt-4 w-44 h-4 rounded-full bg-gradient-to-r from-cyan-500 via-indigo-500 to-purple-600 opacity-60 blur-xs"></div>
+                    <div className="mt-4 w-44 h-4 rounded-full bg-gradient-to-r from-cyan-500 via-indigo-500 to-purple-600 opacity-60 blur-sm"></div>
                   </div>
 
                   {/* Connected Status Notification */}

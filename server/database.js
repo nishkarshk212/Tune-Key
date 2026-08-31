@@ -6,11 +6,16 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const dbPath = path.join(__dirname, 'database.sqlite');
+const dbPath = process.env.VERCEL
+  ? path.join('/tmp', 'database.sqlite')
+  : path.join(__dirname, 'database.sqlite');
+
 const db = new Database(dbPath);
 
-// Enable WAL mode for high performance
-db.pragma('journal_mode = WAL');
+if (!process.env.VERCEL) {
+  // Enable WAL mode for local high performance
+  db.pragma('journal_mode = WAL');
+}
 
 export function initDatabase() {
   // 1. Users Table

@@ -66,7 +66,11 @@ app.get('*', (req, res, next) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 TuneKey YouTube API Server running on http://localhost:${PORT}`);
-  console.log(`📡 Bot Gateway live at http://localhost:${PORT}/api/v1/yt`);
-});
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`🚀 TuneKey YouTube API Server running on http://localhost:${PORT}`);
+    console.log(`📡 Bot Gateway live at http://localhost:${PORT}/api/v1/yt`);
+  });
+}
+
+export default app;

@@ -211,7 +211,7 @@ export default function DashboardLayout() {
                       <p className="text-[11px] text-slate-500 truncate">{user?.email}</p>
                       <div className="flex items-center justify-between pt-2 text-[11px]">
                         <span className="text-slate-500">Credit Balance:</span>
-                        <span className="font-mono text-emerald-500 font-bold">₹{user?.balance ? user.balance.toFixed(2) : '500.00'}</span>
+                        <span className="font-mono text-emerald-500 font-bold">₹{Number(user?.balance || 0).toFixed(2)}</span>
                       </div>
                     </div>
 

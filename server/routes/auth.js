@@ -49,18 +49,18 @@ router.post('/register', (req, res) => {
 
     db.prepare(`
       INSERT INTO users (id, email, password_hash, name, role, balance, avatar_url)
-      VALUES (?, ?, ?, ?, 'user', 10.0, ?)
+      VALUES (?, ?, ?, ?, 'user', 0.0, ?)
     `).run(userId, emailClean, passwordHash, name.trim(), `https://api.dicebear.com/7.x/bottts/svg?seed=${userId}`);
 
     // Create a free starter trial API key for new user
-    const trialKey = `tk_live_yt_${uuidv4().replace(/-/g, '').slice(0, 24)}`;
+    const trialKey = `v-bit-free-${uuidv4().replace(/-/g, '').slice(0, 24)}`;
     const clientToken = `tok_tg_${uuidv4().replace(/-/g, '').slice(0, 16)}`;
     const expires = new Date();
-    expires.setDate(expires.getDate() + 7); // 7 day trial
+    expires.setDate(expires.getDate() + 30);
 
     db.prepare(`
       INSERT INTO api_keys (id, user_id, plan_id, key_name, api_key, client_token, status, daily_quota, total_quota, rps_limit, expires_at)
-      VALUES (?, ?, 'plan_starter', 'Default Telegram Bot Key', ?, ?, 'active', 5000, 35000, 5, ?)
+      VALUES (?, ?, 'plan_free', 'Default YouTube Bot Key', ?, ?, 'active', 500, 15000, 5, ?)
     `).run(`key_${uuidv4().replace(/-/g, '').slice(0, 10)}`, userId, trialKey, clientToken, expires.toISOString());
 
     const newUser = db.prepare('SELECT id, email, name, role, balance, avatar_url, created_at FROM users WHERE id = ?').get(userId);
@@ -68,7 +68,7 @@ router.post('/register', (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: 'Account created successfully! $10 trial bonus & Free Bot Key provisioned.',
+      message: 'Account created successfully! Free Bot Key provisioned.',
       token,
       user: newUser
     });
@@ -202,18 +202,18 @@ router.get('/google/callback', async (req, res) => {
 
       db.prepare(`
         INSERT INTO users (id, email, name, role, balance, avatar_url)
-        VALUES (?, ?, ?, ?, 9.20, ?)
+        VALUES (?, ?, ?, ?, 0.0, ?)
       `).run(userId, emailClean, profile.name || emailClean.split('@')[0], isAdminUser ? 'admin' : 'user', avatarUrl);
 
       // Create initial API key
-      const trialKey = `v-bit-trial-${uuidv4().replace(/-/g, '').slice(0, 24)}`;
+      const trialKey = `v-bit-free-${uuidv4().replace(/-/g, '').slice(0, 24)}`;
       const clientToken = `tok_${uuidv4().replace(/-/g, '').slice(0, 16)}`;
       const expires = new Date();
-      expires.setDate(expires.getDate() + 28);
+      expires.setDate(expires.getDate() + 30);
 
       db.prepare(`
         INSERT INTO api_keys (id, user_id, plan_id, key_name, api_key, client_token, status, daily_quota, today_requests, rps_limit, expires_at)
-        VALUES (?, ?, 'plan_free', 'Default Key', ?, ?, 'active', 500, 0, 5, ?)
+        VALUES (?, ?, 'plan_free', 'Default Free Key', ?, ?, 'active', 500, 0, 5, ?)
       `).run(`key_${uuidv4().replace(/-/g, '').slice(0, 10)}`, userId, trialKey, clientToken, expires.toISOString());
 
       user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
@@ -251,17 +251,17 @@ router.post('/google', (req, res) => {
 
       db.prepare(`
         INSERT INTO users (id, email, name, role, balance, avatar_url)
-        VALUES (?, ?, ?, 'user', 9.20, ?)
+        VALUES (?, ?, ?, 'user', 0.0, ?)
       `).run(userId, emailClean, name || emailClean.split('@')[0], avatarUrl);
 
-      const trialKey = `yt_live_${uuidv4().replace(/-/g, '').slice(0, 24)}`;
+      const trialKey = `v-bit-free-${uuidv4().replace(/-/g, '').slice(0, 24)}`;
       const clientToken = `tok_live_${uuidv4().replace(/-/g, '').slice(0, 16)}`;
       const expires = new Date();
-      expires.setDate(expires.getDate() + 28);
+      expires.setDate(expires.getDate() + 30);
 
       db.prepare(`
         INSERT INTO api_keys (id, user_id, plan_id, key_name, api_key, client_token, status, daily_quota, today_requests, rps_limit, expires_at)
-        VALUES (?, ?, 'plan_pro', 'Google Bot Key', ?, ?, 'active', 50000, 0, 30, ?)
+        VALUES (?, ?, 'plan_free', 'Default Free Key', ?, ?, 'active', 500, 0, 5, ?)
       `).run(`key_${uuidv4().replace(/-/g, '').slice(0, 10)}`, userId, trialKey, clientToken, expires.toISOString());
 
       user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);

@@ -127,7 +127,42 @@ router.post('/keys/create', authenticateToken, (req, res) => {
     const targetPlanId = planId || 'plan_free';
     const plan = db.prepare('SELECT * FROM plans WHERE id = ?').get(targetPlanId) 
       || db.prepare("SELECT * FROM plans WHERE id = 'plan_free'").get()
-      || { id: 'plan_free', name: 'FREE', tier: 'Free', daily_quota: 500, total_quota: 15000, rps_limit: 5 };
+      || { id: 'plan_free', name: 'FREE', tier: 'Free', daily_quota: 500, total_quota: 15000, rps_limit: 5, price: 0 };
+
+    // Enforce 1 active API key per plan subscription
+    const existingKey = db.prepare(`
+      SELECT * FROM api_keys 
+      WHERE user_id = ? AND plan_id = ? AND status = 'active'
+    `).get(userId, plan.id);
+
+    if (existingKey) {
+      return res.status(400).json({
+        success: false,
+        error: `Only 1 active API key is permitted per plan (${plan.name}). You already have key "${existingKey.key_name}" (${existingKey.api_key}). You can regenerate it if you need a new key.`
+      });
+    }
+
+    // If paid plan, verify user has an order or sufficient wallet balance
+    if (plan.id !== 'plan_free' && plan.price > 0) {
+      const hasOrder = db.prepare(`
+        SELECT * FROM orders 
+        WHERE user_id = ? AND plan_id = ? AND payment_status = 'completed'
+      `).get(userId, plan.id);
+
+      const userRec = db.prepare('SELECT balance FROM users WHERE id = ?').get(userId);
+
+      if (!hasOrder) {
+        if ((userRec?.balance || 0) < plan.price) {
+          return res.status(400).json({
+            success: false,
+            error: `Insufficient wallet balance for ${plan.name} plan (₹${plan.price}). Please add funds in the Wallet tab or purchase from the Plans page.`
+          });
+        }
+
+        // Deduct from wallet balance
+        db.prepare('UPDATE users SET balance = balance - ? WHERE id = ?').run(plan.price, userId);
+      }
+    }
 
     const newApiKey = generateApiKeyForPlan(plan.tier);
     const newClientToken = generateClientToken();

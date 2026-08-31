@@ -159,8 +159,8 @@ export default function LandingPage() {
     },
     {
       category: 'General',
-      q: 'Can I generate multiple API keys under one subscription?',
-      a: 'Yes! Depending on your chosen tier (Pro allows 3 keys, Advanced allows 10 keys, Unlimited offers unlimited keys), you can generate and manage multiple bot instances simultaneously.'
+      q: 'Can I generate multiple API keys in one plan?',
+      a: 'No. Each plan subscription provisions 1 dedicated high-speed API key to guarantee maximum performance, dedicated bandwidth, and strict quota allocation for your Telegram music bot. If you need a fresh token, you can instantly regenerate your key at any time from your dashboard.'
     },
     {
       category: 'General',

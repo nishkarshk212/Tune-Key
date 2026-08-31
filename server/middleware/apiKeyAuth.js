@@ -138,7 +138,7 @@ export function authenticateApiKey(req, res, next) {
       // Log request with unique id
       const logId = 'log_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
       db.prepare(`
-        INSERT INTO usage_logs (id, api_key_id, user_id, endpoint, query, status_code, latency_ms, ip_address, bot_agent)
+        INSERT INTO usage_logs (id, key_id, user_id, endpoint, query, status_code, latency_ms, ip_address, bot_agent)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(
         logId,

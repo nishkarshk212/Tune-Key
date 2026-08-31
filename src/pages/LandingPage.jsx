@@ -67,8 +67,8 @@ export default function LandingPage() {
     {
       id: 'plan_basic',
       name: 'BASIC',
-      monthlyPrice: 199,
-      yearlyPrice: 159,
+      monthlyPrice: 49,
+      yearlyPrice: 39,
       requests: '10,000 Requests / day',
       keys: '1 Dedicated API Key',
       support: 'Standard Support',
@@ -78,8 +78,8 @@ export default function LandingPage() {
     {
       id: 'plan_pro',
       name: 'PRO',
-      monthlyPrice: 499,
-      yearlyPrice: 399,
+      monthlyPrice: 99,
+      yearlyPrice: 79,
       requests: '50,000 Requests / day',
       keys: '1 Dedicated API Key',
       support: 'Priority Support',
@@ -89,8 +89,8 @@ export default function LandingPage() {
     {
       id: 'plan_advanced',
       name: 'ADVANCED',
-      monthlyPrice: 999,
-      yearlyPrice: 799,
+      monthlyPrice: 149,
+      yearlyPrice: 119,
       requests: '150,000 Requests / day',
       keys: '1 Dedicated API Key',
       support: 'Priority Support',
@@ -100,8 +100,8 @@ export default function LandingPage() {
     {
       id: 'plan_unlimited',
       name: 'UNLIMITED',
-      monthlyPrice: 1999,
-      yearlyPrice: 1599,
+      monthlyPrice: 199,
+      yearlyPrice: 159,
       requests: 'Unlimited Requests',
       keys: '1 Dedicated API Key',
       support: 'VIP Support',

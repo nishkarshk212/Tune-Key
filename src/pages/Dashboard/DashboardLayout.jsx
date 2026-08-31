@@ -33,6 +33,40 @@ export default function DashboardLayout() {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [notifications, setNotifications] = useState([
+    {
+      id: 1,
+      title: 'YouTube Streaming Gateway Online',
+      message: 'Active endpoint: https://vbit-api-store.vercel.app/api/v1/yt. Direct Opus 160kbps audio enabled.',
+      time: 'Just now',
+      unread: true,
+    },
+    {
+      id: 2,
+      title: 'Daily Quota Reset System',
+      message: 'Your key quotas automatically reset daily at 00:00 UTC with real-time telemetry.',
+      time: '1 hour ago',
+      unread: true,
+    },
+    {
+      id: 3,
+      title: '24/7 Telegram Support Channel',
+      message: 'Join @VAMPIREUPDATES for real-time bot maintenance updates and live support.',
+      time: '1 day ago',
+      unread: false,
+    },
+  ]);
+
+  const hasUnread = notifications.some(n => n.unread);
+
+  const markAllAsRead = () => {
+    setNotifications(prev => prev.map(n => ({ ...n, unread: false })));
+  };
+
+  const clearAllNotifications = () => {
+    setNotifications([]);
+  };
 
   const isCurrent = (path) => {
     if (path === '/dashboard' && location.pathname === '/dashboard') return true;
@@ -171,14 +205,99 @@ export default function DashboardLayout() {
               {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-700" />}
             </button>
 
-            {/* Notification Bell */}
-            <button
-              title="Notifications"
-              className="p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.05] transition-all relative"
-            >
-              <Bell className="w-4 h-4" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-purple-500"></span>
-            </button>
+            {/* Notification Bell Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => {
+                  setNotificationsOpen(!notificationsOpen);
+                  setUserDropdownOpen(false);
+                }}
+                title="Notifications"
+                className="p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.05] transition-all relative cursor-pointer"
+              >
+                <Bell className="w-4 h-4" />
+                {hasUnread && (
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-purple-500 animate-pulse"></span>
+                )}
+              </button>
+
+              {/* Notification Dropdown */}
+              {notificationsOpen && (
+                <>
+                  <div className="fixed inset-0 z-30" onClick={() => setNotificationsOpen(false)} />
+                  <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl bg-white dark:bg-[#11131B] border border-slate-200 dark:border-white/[0.08] p-3 z-40 shadow-2xl text-xs animate-scaleUp">
+                    {/* Header */}
+                    <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-white/[0.06]">
+                      <div className="flex items-center space-x-2">
+                        <span className="font-bold text-slate-900 dark:text-white text-sm">Notifications</span>
+                        <span className="px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-600 dark:text-purple-400 text-[10px] font-bold">
+                          {notifications.filter(n => n.unread).length} new
+                        </span>
+                      </div>
+                      {notifications.some(n => n.unread) && (
+                        <button
+                          onClick={markAllAsRead}
+                          className="text-[11px] text-purple-500 hover:text-purple-600 dark:hover:text-purple-300 font-semibold cursor-pointer"
+                        >
+                          Mark all as read
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Notification List */}
+                    <div className="py-2 max-h-80 overflow-y-auto space-y-2">
+                      {notifications.length === 0 ? (
+                        <div className="py-8 text-center text-slate-400">
+                          <Bell className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                          <p>No notifications</p>
+                        </div>
+                      ) : (
+                        notifications.map((n) => (
+                          <div 
+                            key={n.id} 
+                            onClick={() => setNotifications(prev => prev.map(item => item.id === n.id ? { ...item, unread: false } : item))}
+                            className={`p-2.5 rounded-xl border transition-all cursor-pointer ${
+                              n.unread 
+                                ? 'bg-purple-500/5 dark:bg-purple-500/10 border-purple-500/20' 
+                                : 'bg-slate-50/50 dark:bg-white/[0.02] border-slate-100 dark:border-white/[0.04]'
+                            }`}
+                          >
+                            <div className="flex items-start space-x-2.5">
+                              <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${n.unread ? 'bg-purple-500' : 'bg-slate-300 dark:bg-slate-700'}`} />
+                              <div className="flex-1 min-w-0">
+                                <p className="font-bold text-slate-900 dark:text-white text-[12px] leading-tight">{n.title}</p>
+                                <p className="text-slate-500 dark:text-slate-400 text-[11px] leading-relaxed mt-1 break-words">{n.message}</p>
+                                <span className="text-[10px] text-slate-400 font-mono mt-1.5 block">{n.time}</span>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+
+                    {/* Footer */}
+                    <div className="pt-2.5 border-t border-slate-100 dark:border-white/[0.06] flex items-center justify-between text-[11px]">
+                      <a
+                        href="https://t.me/VAMPIREUPDATES"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-purple-500 hover:underline flex items-center space-x-1 font-semibold"
+                      >
+                        <span>Telegram Channel ↗</span>
+                      </a>
+                      {notifications.length > 0 && (
+                        <button
+                          onClick={clearAllNotifications}
+                          className="text-slate-400 hover:text-rose-500 transition-colors cursor-pointer"
+                        >
+                          Clear all
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
 
             {/* User Capsule Pill with Dropdown */}
             <div className="relative">

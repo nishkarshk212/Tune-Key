@@ -22,7 +22,8 @@ import {
   ShieldCheck,
   ChevronDown,
   User,
-  AlertTriangle
+  AlertTriangle,
+  Wallet
 } from 'lucide-react';
 
 export default function DashboardLayout() {
@@ -78,9 +79,9 @@ export default function DashboardLayout() {
     { label: 'Overview', path: '/dashboard', icon: LayoutDashboard },
     { label: 'API Keys', path: '/dashboard/keys', icon: Key },
     { label: 'Plans', path: '/dashboard/plans', icon: Package },
+    { label: 'Wallet & Top-up', path: '/dashboard/wallet', icon: Wallet },
     { label: 'Usage', path: '/dashboard/analytics', icon: BarChart3 },
-    { label: 'Orders', path: '/dashboard/invoices', icon: ShoppingCart },
-    { label: 'Billing', path: '/dashboard/invoices', icon: Receipt },
+    { label: 'Orders & Invoices', path: '/dashboard/invoices', icon: Receipt },
     { label: 'Documentation', path: '/docs', icon: BookOpen },
     { label: 'Support', path: 'https://t.me/VAMPIREUPDATES', isExternal: true, icon: Headphones },
     { label: 'Settings', path: '/dashboard/settings', icon: Settings },
@@ -351,6 +352,15 @@ export default function DashboardLayout() {
                       >
                         <Key className="w-4 h-4 text-indigo-400" />
                         <span>My API Keys</span>
+                      </Link>
+
+                      <Link
+                        to="/dashboard/wallet"
+                        onClick={() => setUserDropdownOpen(false)}
+                        className="flex items-center space-x-2.5 px-3 py-2 rounded-xl text-slate-700 dark:text-slate-300 hover:text-white hover:bg-purple-600/15 transition-colors font-medium"
+                      >
+                        <Wallet className="w-4 h-4 text-emerald-400" />
+                        <span>Wallet & Add Funds</span>
                       </Link>
 
                       <Link

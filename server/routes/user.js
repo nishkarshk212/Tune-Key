@@ -377,4 +377,91 @@ router.get('/analytics', authenticateToken, (req, res) => {
   }
 });
 
+// Get User Wallet & Deposit History
+router.get('/wallet', authenticateToken, (req, res) => {
+  try {
+    const userId = req.user.id;
+    const user = db.prepare('SELECT id, email, name, balance FROM users WHERE id = ?').get(userId);
+
+    const transactions = db.prepare(`
+      SELECT o.*, p.name as plan_name
+      FROM orders o
+      LEFT JOIN plans p ON o.plan_id = p.id
+      WHERE o.user_id = ?
+      ORDER BY o.created_at DESC
+    `).all(userId);
+
+    const totalDeposited = transactions
+      .filter(t => t.payment_status === 'completed' && (!t.plan_id || t.plan_id === 'wallet_deposit'))
+      .reduce((sum, t) => sum + (t.amount || 0), 0);
+
+    const totalSpent = transactions
+      .filter(t => t.payment_status === 'completed' && t.plan_id && t.plan_id !== 'wallet_deposit')
+      .reduce((sum, t) => sum + (t.amount || 0), 0);
+
+    return res.json({
+      success: true,
+      balance: user?.balance || 0.0,
+      totalDeposited,
+      totalSpent,
+      transactions,
+      merchantUpi: {
+        upiId: '7738221844@ptaxis',
+        merchantName: 'Mohammed Hakeeb',
+        qrUrl: '/assets/paytm_qr.jpg'
+      }
+    });
+  } catch (error) {
+    console.error('Wallet fetch error:', error);
+    return res.status(500).json({ success: false, error: 'Failed to fetch wallet info' });
+  }
+});
+
+// Submit Wallet Deposit Request
+router.post('/wallet/deposit', authenticateToken, (req, res) => {
+  try {
+    const { amount, utrNumber, paymentMethod } = req.body;
+    const userId = req.user.id;
+
+    const depositAmount = parseFloat(amount);
+    if (!depositAmount || depositAmount < 10) {
+      return res.status(400).json({ success: false, error: 'Minimum deposit amount is ₹10' });
+    }
+
+    if (!utrNumber || utrNumber.trim().length < 6) {
+      return res.status(400).json({ success: false, error: 'Please enter a valid 12-digit UTR or Transaction ID' });
+    }
+
+    // Check for duplicate UTR submission
+    const existing = db.prepare('SELECT * FROM orders WHERE transaction_id = ?').get(utrNumber.trim());
+    if (existing) {
+      return res.status(400).json({ success: false, error: 'This UTR has already been submitted.' });
+    }
+
+    const orderId = `dep_${uuidv4().replace(/-/g, '').slice(0, 10)}`;
+
+    db.prepare(`
+      INSERT INTO orders (id, user_id, plan_id, amount, currency, payment_method, payment_status, transaction_id)
+      VALUES (?, ?, 'wallet_deposit', ?, 'INR', ?, 'pending', ?)
+    `).run(
+      orderId,
+      userId,
+      depositAmount,
+      paymentMethod || 'Paytm UPI QR',
+      utrNumber.trim()
+    );
+
+    const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId);
+
+    return res.status(201).json({
+      success: true,
+      message: `Deposit request of ₹${depositAmount} submitted successfully! Balance will be credited upon UTR verification.`,
+      order
+    });
+  } catch (error) {
+    console.error('Deposit error:', error);
+    return res.status(500).json({ success: false, error: 'Failed to submit deposit request' });
+  }
+});
+
 export default router;

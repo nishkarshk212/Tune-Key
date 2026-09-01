@@ -208,6 +208,15 @@ router.post('/orders/:id/approve', (req, res) => {
     // 1. Mark order completed
     db.prepare("UPDATE orders SET payment_status = 'completed' WHERE id = ?").run(id);
 
+    // If this is a wallet deposit, credit user balance
+    if (!order.plan_id || order.plan_id === 'wallet_deposit') {
+      db.prepare("UPDATE users SET balance = balance + ? WHERE id = ?").run(order.amount, order.user_id);
+      return res.json({
+        success: true,
+        message: `Wallet deposit of ₹${order.amount} approved and credited to ${order.user_email}!`
+      });
+    }
+
     // 2. Generate and provision high-quota API Key
     const apiKey = generateApiKeyForPlan(order.plan_tier || order.plan_name);
     const clientToken = generateClientToken();

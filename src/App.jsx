@@ -21,6 +21,7 @@ const Plans = lazy(() => import('./pages/Dashboard/Plans'));
 const Analytics = lazy(() => import('./pages/Dashboard/Analytics'));
 const BotConfig = lazy(() => import('./pages/Dashboard/BotConfig'));
 const Invoices = lazy(() => import('./pages/Dashboard/Invoices'));
+const Wallet = lazy(() => import('./pages/Dashboard/Wallet'));
 const Settings = lazy(() => import('./pages/Dashboard/Settings'));
 
 // Admin Portal Pages (Lazy Loaded)
@@ -137,6 +138,7 @@ export default function App() {
                   <Route path="analytics" element={<Analytics />} />
                   <Route path="bot-config" element={<BotConfig />} />
                   <Route path="invoices" element={<Invoices />} />
+                  <Route path="wallet" element={<Wallet />} />
                   <Route path="settings" element={<Settings />} />
                 </Route>
 

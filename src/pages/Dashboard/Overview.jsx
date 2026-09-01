@@ -231,18 +231,23 @@ export default function Overview() {
         </div>
 
         {/* Card 4: Account Balance */}
-        <div className="p-5 rounded-2xl bg-white dark:bg-[#11131B] border border-slate-200 dark:border-white/[0.07] flex items-center justify-between shadow-sm">
+        <Link 
+          to="/dashboard/wallet"
+          className="p-5 rounded-2xl bg-white dark:bg-[#11131B] border border-slate-200 dark:border-white/[0.07] hover:border-emerald-500/50 flex items-center justify-between shadow-sm transition-all group cursor-pointer"
+        >
           <div>
             <p className="text-xs font-semibold text-slate-500">Account Balance</p>
             <p className="text-2xl font-bold text-slate-900 dark:text-white font-mono mt-1">
-              ₹0.00
+              ₹{Number(stats?.walletBalance || user?.balance || 0).toFixed(2)}
             </p>
-            <p className="text-[11px] text-slate-500 mt-0.5">Wallet Credit</p>
+            <p className="text-[11px] text-emerald-500 dark:text-emerald-400 font-semibold mt-0.5 group-hover:underline">
+              Top Up / Add Funds →
+            </p>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400">
+          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
             <Wallet className="w-5 h-5" />
           </div>
-        </div>
+        </Link>
 
       </div>
 

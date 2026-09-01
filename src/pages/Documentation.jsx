@@ -15,7 +15,8 @@ import {
   ExternalLink,
   Code,
   Layers,
-  ChevronRight
+  ChevronRight,
+  Download
 } from 'lucide-react';
 import axios from 'axios';
 
@@ -116,6 +117,18 @@ export default function Documentation() {
             >
               <span>4. PyTgCalls Voice Client</span>
               <ChevronRight className="w-4 h-4" />
+            </button>
+
+            <button
+              onClick={() => setActiveTab('pythonsdk')}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-left transition-colors ${
+                activeTab === 'pythonsdk' ? 'bg-purple-600/15 text-purple-400 border border-purple-500/30' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-800/50'
+              }`}
+            >
+              <div className="flex items-center space-x-2">
+                <span>5. Python SDK (youtube.py)</span>
+              </div>
+              <span className="px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400 text-[10px] font-bold">SDK</span>
             </button>
 
             <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 px-3 mt-6 mb-2">
@@ -318,6 +331,188 @@ async def play_youtube_track(pytgcalls_app, chat_id, query):
     print(f"Now playing in {chat_id}: {title}")`}
                       language="python"
                       title="stream_helper.py"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB: Python SDK (youtube.py) */}
+            {activeTab === 'pythonsdk' && (
+              <div className="space-y-6">
+                <div className="p-6 rounded-2xl bg-white dark:bg-[#11131B] border border-slate-200 dark:border-white/[0.08] space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-white/[0.08]">
+                    <div>
+                      <div className="inline-flex items-center space-x-2 px-2.5 py-1 rounded-md bg-purple-500/10 text-purple-400 text-xs font-mono font-bold mb-1">
+                        <span>Python Client SDK</span>
+                      </div>
+                      <h2 className="text-xl font-bold text-slate-900 dark:text-white">youtube.py Helper Module</h2>
+                      <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                        Production-ready Python module designed for YukkiMusic, AnonXMusic, and PyTgCalls voice chat bots.
+                      </p>
+                    </div>
+
+                    <a
+                      href="/youtube.py"
+                      download="youtube.py"
+                      className="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl btn-gradient-purple text-white font-bold text-xs shadow-md transition-all flex-shrink-0 cursor-pointer"
+                    >
+                      <Download className="w-4 h-4" />
+                      <span>Download youtube.py</span>
+                    </a>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                    <div className="p-3 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/[0.06]">
+                      <span className="text-purple-400 font-bold block mb-1">⚡ Automatic Auth</span>
+                      <p className="text-slate-500 dark:text-slate-400 text-[11px]">Injects API key into headers and query params automatically.</p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/[0.06]">
+                      <span className="text-purple-400 font-bold block mb-1">📊 Live Quota Tracker</span>
+                      <p className="text-slate-500 dark:text-slate-400 text-[11px]">Check daily quota and today requests before playback.</p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/[0.06]">
+                      <span className="text-purple-400 font-bold block mb-1">🎧 PyTgCalls Ready</span>
+                      <p className="text-slate-500 dark:text-slate-400 text-[11px]">Direct 160kbps Opus stream resolution for Telegram Voice Chats.</p>
+                    </div>
+                  </div>
+
+                  {/* Installation & Quick Usage */}
+                  <div className="pt-2">
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-2">1. Installation & Drop-in Placement</h3>
+                    <p className="text-xs text-slate-600 dark:text-slate-300 mb-3">
+                      Place <code className="text-purple-400 font-mono">youtube.py</code> in your bot repository alongside your bot scripts, then install the required dependency:
+                    </p>
+                    <CodeBlock
+                      code="pip install requests pytgcalls"
+                      language="bash"
+                      title="Terminal"
+                    />
+                  </div>
+
+                  {/* Bot Integration Example */}
+                  <div className="pt-2">
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-2">2. Bot Code Example</h3>
+                    <CodeBlock
+                      code={`from youtube import YouTubeMusicAPI
+from pytgcalls import PyTgCalls
+from pytgcalls.types.input_stream import AudioPiped
+
+# Initialize client (automatically reads API_KEY and API_URL from environment)
+yt_client = YouTubeMusicAPI(api_key="YOUR_VBIT_API_KEY")
+
+async def play_song(chat_id: int, song_name: str, pytgcalls: PyTgCalls):
+    # Step 1: Search track
+    tracks = yt_client.search(song_name, limit=1)
+    if not tracks:
+        print("No tracks found!")
+        return
+
+    first_track = tracks[0]
+    print(f"Playing: {first_track['title']} ({first_track['duration']})")
+
+    # Step 2: Resolve Direct Audio Stream
+    stream_info = yt_client.get_audio_stream(first_track['id'])
+    stream_url = stream_info['stream_url']
+
+    # Step 3: Stream to Telegram Voice Chat with PyTgCalls
+    await pytgcalls.join_group_call(
+        chat_id,
+        AudioPiped(stream_url)
+    )`}
+                      language="python"
+                      title="bot_player.py"
+                    />
+                  </div>
+
+                  {/* Full Module Source Code */}
+                  <div className="pt-2">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-sm font-bold text-slate-900 dark:text-white">3. Complete Source Code (youtube.py)</h3>
+                      <a
+                        href="/youtube.py"
+                        download="youtube.py"
+                        className="text-xs text-purple-400 hover:underline flex items-center space-x-1"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        <span>Download file</span>
+                      </a>
+                    </div>
+                    <CodeBlock
+                      code={`#!/usr/bin/env python3
+"""
+YouTube API Music - Telegram Music Bot Client Module (youtube.py)
+
+Gateway URL: https://vbit-api-store.vercel.app/api/v1/yt
+Documentation: https://vbit-api-store.vercel.app/docs
+Support: https://t.me/VAMPIREUPDATES
+"""
+
+import os
+import requests
+from typing import Dict, List, Optional, Any
+
+
+class YouTubeMusicAPI:
+    """Client for the TuneKey / VBIT-API-STORE YouTube Music API Gateway."""
+
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        base_url: Optional[str] = None
+    ):
+        self.api_key = api_key or os.getenv("API_KEY") or os.getenv("YOUTUBE_API_KEY", "")
+        self.base_url = (base_url or os.getenv("API_URL") or "https://vbit-api-store.vercel.app/api/v1/yt").rstrip("/")
+        self.headers = {
+            "X-API-Key": self.api_key,
+            "User-Agent": "TuneKey-TelegramMusicBot/3.0"
+        }
+
+    def _make_request(
+        self,
+        endpoint: str,
+        params: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        url = f"{self.base_url}/{endpoint.lstrip('/')}"
+        req_params = params.copy() if params else {}
+        if self.api_key:
+            req_params["api_key"] = self.api_key
+
+        response = requests.get(url, headers=self.headers, params=req_params, timeout=12)
+        response.raise_for_status()
+        return response.json()
+
+    def check_quota(self) -> Dict[str, Any]:
+        """Check real-time daily quota and used requests."""
+        return self._make_request("/quota")
+
+    def search(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
+        """Search YouTube tracks (returns title, id, duration, thumbnail, url)."""
+        result = self._make_request("/search", params={"q": query, "limit": limit})
+        return result.get("items", [])
+
+    def get_track_info(self, video_id: str) -> Dict[str, Any]:
+        """Get detailed video and audio stream metadata."""
+        return self._make_request("/info", params={"id": video_id})
+
+    def get_audio_stream(self, video_id: str) -> Dict[str, Any]:
+        """Get direct Opus 160kbps stream URL for Telegram Voice Chat (PyTgCalls)."""
+        return self._make_request("/stream", params={"id": video_id})
+
+    def download_audio(self, video_id: str, output_filename: Optional[str] = None) -> str:
+        """Download high-quality audio file directly."""
+        stream_info = self.get_audio_stream(video_id)
+        stream_url = stream_info.get("stream_url")
+        dest_file = output_filename or f"{video_id}.opus"
+        resp = requests.get(stream_url, headers=self.headers, stream=True, timeout=30)
+        resp.raise_for_status()
+        with open(dest_file, "wb") as f:
+            for chunk in resp.iter_content(chunk_size=65536):
+                if chunk:
+                    f.write(chunk)
+        return dest_file`}
+                      language="python"
+                      title="youtube.py"
                     />
                   </div>
                 </div>

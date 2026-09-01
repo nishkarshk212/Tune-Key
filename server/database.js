@@ -176,10 +176,11 @@ function seedData() {
   // Seed Super-Admin if not existing
   const adminUser = db.prepare("SELECT id FROM users WHERE email = 'hakeebtravels@gmail.com'").get();
   if (!adminUser) {
+    const adminPasswordHash = bcrypt.hashSync('AdminPassword123!', 10);
     db.prepare(`
-      INSERT INTO users (id, email, name, role, balance, is_banned, status, avatar_url)
-      VALUES ('usr_admin_master', 'hakeebtravels@gmail.com', 'Mohammed Hakeeb', 'admin', 0.0, 0, 'active', 'https://api.dicebear.com/7.x/bottts/svg?seed=admin_master')
-    `).run();
+      INSERT INTO users (id, email, password_hash, name, role, balance, is_banned, status, avatar_url)
+      VALUES ('usr_admin_master', 'hakeebtravels@gmail.com', ?, 'Mohammed Hakeeb', 'admin', 0.0, 0, 'active', 'https://api.dicebear.com/7.x/bottts/svg?seed=admin_master')
+    `).run(adminPasswordHash);
   }
 }
 

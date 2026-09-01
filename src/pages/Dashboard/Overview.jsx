@@ -238,7 +238,7 @@ export default function Overview() {
           <div>
             <p className="text-xs font-semibold text-slate-500">Account Balance</p>
             <p className="text-2xl font-bold text-slate-900 dark:text-white font-mono mt-1">
-              ₹{Number(stats?.walletBalance || user?.balance || 0).toFixed(2)}
+              ₹{Number(data?.stats?.walletBalance ?? user?.balance ?? 0).toFixed(2)}
             </p>
             <p className="text-[11px] text-emerald-500 dark:text-emerald-400 font-semibold mt-0.5 group-hover:underline">
               Top Up / Add Funds →

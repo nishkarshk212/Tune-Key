@@ -93,7 +93,7 @@ export default function OrderManagement() {
     setTimeout(() => setCopiedUtr(null), 2000);
   };
 
-  const pendingCount = orders.filter(o => o.payment_status === 'pending_verification').length;
+  const pendingCount = orders.filter(o => o.payment_status === 'pending_verification' || o.payment_status === 'pending').length;
   const completedRevenue = orders
     .filter(o => o.payment_status === 'completed')
     .reduce((sum, o) => sum + (o.amount || 0), 0);
@@ -111,6 +111,7 @@ export default function OrderManagement() {
 
     const matchesStatus = (
       statusFilter === 'all' ||
+      (statusFilter === 'pending_verification' && (o.payment_status === 'pending_verification' || o.payment_status === 'pending')) ||
       o.payment_status === statusFilter
     );
 
@@ -248,7 +249,7 @@ export default function OrderManagement() {
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-white/[0.06] font-mono">
                 {filteredOrders.map((o) => {
-                  const isPending = o.payment_status === 'pending_verification';
+                  const isPending = o.payment_status === 'pending_verification' || o.payment_status === 'pending';
 
                   return (
                     <tr 
@@ -282,7 +283,7 @@ export default function OrderManagement() {
                           {o.transaction_id && (
                             <button
                               onClick={() => copyToClipboard(o.transaction_id, o.id)}
-                              className="p-1 rounded hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+                              className="p-1 rounded hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer"
                               title="Copy UTR"
                             >
                               {copiedUtr === o.id ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
@@ -301,7 +302,7 @@ export default function OrderManagement() {
                         {isPending ? (
                           <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase bg-amber-500/20 text-amber-400 border border-amber-500/40 inline-flex items-center space-x-1">
                             <Clock className="w-3 h-3" />
-                            <span>VERIFY UTR</span>
+                            <span>PENDING</span>
                           </span>
                         ) : o.payment_status === 'completed' ? (
                           <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 inline-flex items-center space-x-1">
@@ -321,14 +322,15 @@ export default function OrderManagement() {
                         {new Date(o.created_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
                       </td>
 
-                      {/* Actions */}
+                      {/* Actions: Strictly Approve and Reject Options */}
                       <td className="py-3.5 px-4 text-right">
                         {isPending ? (
                           <div className="flex items-center justify-end space-x-2">
                             <button
                               onClick={() => handleApprove(o.id)}
                               disabled={actionLoading === o.id}
-                              className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold text-[11px] shadow-md shadow-emerald-500/20 flex items-center space-x-1 transition-all"
+                              className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] shadow-md shadow-emerald-500/20 flex items-center space-x-1 transition-all cursor-pointer disabled:opacity-50"
+                              title="Approve Payment"
                             >
                               {actionLoading === o.id ? (
                                 <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -342,13 +344,23 @@ export default function OrderManagement() {
                             <button
                               onClick={() => handleReject(o.id)}
                               disabled={actionLoading === o.id}
-                              className="px-2.5 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 font-bold text-[11px] transition-colors"
+                              className="px-3 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-600 text-rose-400 hover:text-white border border-rose-500/30 font-bold text-[11px] flex items-center space-x-1 transition-all cursor-pointer disabled:opacity-50"
+                              title="Reject Payment"
                             >
-                              Reject
+                              <XCircle className="w-3 h-3" />
+                              <span>Reject</span>
                             </button>
                           </div>
+                        ) : o.payment_status === 'completed' ? (
+                          <span className="inline-flex items-center space-x-1 text-emerald-500 dark:text-emerald-400 font-bold text-[11px] font-sans">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>Approved</span>
+                          </span>
                         ) : (
-                          <span className="text-slate-500 text-[11px] font-sans">Processed</span>
+                          <span className="inline-flex items-center space-x-1 text-rose-400 font-bold text-[11px] font-sans">
+                            <XCircle className="w-3.5 h-3.5" />
+                            <span>Rejected</span>
+                          </span>
                         )}
                       </td>
                     </tr>

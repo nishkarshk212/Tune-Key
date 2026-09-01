@@ -162,6 +162,17 @@ function seedData() {
     }
   }
 
+  // Ensure wallet_deposit plan entry exists
+  const walletPlan = db.prepare("SELECT id FROM plans WHERE id = 'wallet_deposit'").get();
+  if (!walletPlan) {
+    try {
+      db.prepare(`
+        INSERT INTO plans (id, name, tier, price, billing_period, daily_quota, total_quota, rps_limit, max_keys, features_json, is_popular, is_active)
+        VALUES ('wallet_deposit', 'Wallet Top-Up', 'Wallet', 0, 'onetime', 0, 0, 0, 0, '[]', 0, 0)
+      `).run();
+    } catch(e) {}
+  }
+
   // Seed Super-Admin if not existing
   const adminUser = db.prepare("SELECT id FROM users WHERE email = 'hakeebtravels@gmail.com'").get();
   if (!adminUser) {

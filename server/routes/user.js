@@ -441,8 +441,8 @@ router.post('/wallet/deposit', authenticateToken, (req, res) => {
     const orderId = `dep_${uuidv4().replace(/-/g, '').slice(0, 10)}`;
 
     db.prepare(`
-      INSERT INTO orders (id, user_id, plan_id, amount, currency, payment_method, payment_status, transaction_id)
-      VALUES (?, ?, 'wallet_deposit', ?, 'INR', ?, 'pending', ?)
+      INSERT INTO orders (id, user_id, plan_id, plan_name, amount, currency, payment_method, payment_status, transaction_id)
+      VALUES (?, ?, 'wallet_deposit', 'Wallet Deposit Top-up', ?, 'INR', ?, 'pending', ?)
     `).run(
       orderId,
       userId,

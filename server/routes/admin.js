@@ -29,10 +29,10 @@ router.get('/overview', (req, res) => {
 
     // Recent orders
     const recentOrders = db.prepare(`
-      SELECT o.*, u.email as user_email, u.name as user_name, p.name as plan_name
+      SELECT o.*, u.email as user_email, u.name as user_name, COALESCE(p.name, 'Wallet Top-Up') as plan_name
       FROM orders o
-      JOIN users u ON o.user_id = u.id
-      JOIN plans p ON o.plan_id = p.id
+      LEFT JOIN users u ON o.user_id = u.id
+      LEFT JOIN plans p ON o.plan_id = p.id
       ORDER BY o.created_at DESC LIMIT 10
     `).all();
 
@@ -41,7 +41,7 @@ router.get('/overview', (req, res) => {
       SELECT l.*, u.email as user_email, k.key_name
       FROM usage_logs l
       LEFT JOIN users u ON l.user_id = u.id
-      LEFT JOIN api_keys k ON l.api_key_id = k.id
+      LEFT JOIN api_keys k ON l.key_id = k.id
       ORDER BY l.timestamp DESC LIMIT 15
     `).all();
 

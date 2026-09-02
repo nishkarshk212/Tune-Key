@@ -2,6 +2,7 @@ import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { LanguageProvider } from './context/LanguageContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -25,11 +26,16 @@ const Wallet = lazy(() => import('./pages/Dashboard/Wallet'));
 const Settings = lazy(() => import('./pages/Dashboard/Settings'));
 
 // Admin Portal Pages (Lazy Loaded)
+const AdminLogin = lazy(() => import('./pages/Admin/AdminLogin'));
 const AdminLayout = lazy(() => import('./pages/Admin/AdminLayout'));
 const AdminDashboard = lazy(() => import('./pages/Admin/AdminDashboard'));
 const UserManagement = lazy(() => import('./pages/Admin/UserManagement'));
 const KeyManagement = lazy(() => import('./pages/Admin/KeyManagement'));
+const ServiceManagement = lazy(() => import('./pages/Admin/ServiceManagement'));
+const PlanManagement = lazy(() => import('./pages/Admin/PlanManagement'));
 const OrderManagement = lazy(() => import('./pages/Admin/OrderManagement'));
+const PaymentSettings = lazy(() => import('./pages/Admin/PaymentSettings'));
+const AdminSettings = lazy(() => import('./pages/Admin/AdminSettings'));
 const SystemLogs = lazy(() => import('./pages/Admin/SystemLogs'));
 
 // Error Boundary Component
@@ -98,72 +104,81 @@ export default function App() {
   return (
     <ErrorBoundary>
       <ThemeProvider>
-        <AuthProvider>
-          <Router>
-            <Suspense fallback={<PageLoader />}>
-              <Routes>
-                {/* Public Routes */}
-                <Route
-                  path="/"
-                  element={
-                    <PublicLayout>
-                      <LandingPage />
-                    </PublicLayout>
-                  }
-                />
-                <Route
-                  path="/docs"
-                  element={
-                    <PublicLayout>
-                      <Documentation />
-                    </PublicLayout>
-                  }
-                />
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/forgot-password" element={<ForgotPassword />} />
+        <LanguageProvider>
+          <AuthProvider>
+            <Router>
+              <Suspense fallback={<PageLoader />}>
+                <Routes>
+                  {/* Public Routes */}
+                  <Route
+                    path="/"
+                    element={
+                      <PublicLayout>
+                        <LandingPage />
+                      </PublicLayout>
+                    }
+                  />
+                  <Route
+                    path="/docs"
+                    element={
+                      <PublicLayout>
+                        <Documentation />
+                      </PublicLayout>
+                    }
+                  />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
+                  <Route path="/forgot-password" element={<ForgotPassword />} />
 
-                {/* User Dashboard Protected Routes */}
-                <Route
-                  path="/dashboard"
-                  element={
-                    <ProtectedRoute>
-                      <DashboardLayout />
-                    </ProtectedRoute>
-                  }
-                >
-                  <Route index element={<Overview />} />
-                  <Route path="keys" element={<MyKeys />} />
-                  <Route path="plans" element={<Plans />} />
-                  <Route path="analytics" element={<Analytics />} />
-                  <Route path="bot-config" element={<BotConfig />} />
-                  <Route path="invoices" element={<Invoices />} />
-                  <Route path="wallet" element={<Wallet />} />
-                  <Route path="settings" element={<Settings />} />
-                </Route>
+                  {/* Dedicated Admin Login Route */}
+                  <Route path="/admin/login" element={<AdminLogin />} />
 
-                {/* Admin Portal Protected Routes */}
-                <Route
-                  path="/admin"
-                  element={
-                    <ProtectedRoute requireAdmin={true}>
-                      <AdminLayout />
-                    </ProtectedRoute>
-                  }
-                >
-                  <Route index element={<AdminDashboard />} />
-                  <Route path="users" element={<UserManagement />} />
-                  <Route path="keys" element={<KeyManagement />} />
-                  <Route path="orders" element={<OrderManagement />} />
-                  <Route path="logs" element={<SystemLogs />} />
-                </Route>
+                  {/* User Dashboard Protected Routes */}
+                  <Route
+                    path="/dashboard"
+                    element={
+                      <ProtectedRoute>
+                        <DashboardLayout />
+                      </ProtectedRoute>
+                    }
+                  >
+                    <Route index element={<Overview />} />
+                    <Route path="keys" element={<MyKeys />} />
+                    <Route path="plans" element={<Plans />} />
+                    <Route path="analytics" element={<Analytics />} />
+                    <Route path="bot-config" element={<BotConfig />} />
+                    <Route path="invoices" element={<Invoices />} />
+                    <Route path="wallet" element={<Wallet />} />
+                    <Route path="settings" element={<Settings />} />
+                  </Route>
 
-                {/* Fallback */}
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </Suspense>
-          </Router>
-        </AuthProvider>
+                  {/* Admin Portal Protected Routes */}
+                  <Route
+                    path="/admin"
+                    element={
+                      <ProtectedRoute requireAdmin={true}>
+                        <AdminLayout />
+                      </ProtectedRoute>
+                    }
+                  >
+                    <Route index element={<AdminDashboard />} />
+                    <Route path="users" element={<UserManagement />} />
+                    <Route path="keys" element={<KeyManagement />} />
+                    <Route path="services" element={<ServiceManagement />} />
+                    <Route path="plans" element={<PlanManagement />} />
+                    <Route path="orders" element={<OrderManagement />} />
+                    <Route path="payment-settings" element={<PaymentSettings />} />
+                    <Route path="settings" element={<AdminSettings />} />
+                    <Route path="logs" element={<SystemLogs />} />
+                  </Route>
+
+                  {/* Fallback */}
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </Suspense>
+            </Router>
+          </AuthProvider>
+        </LanguageProvider>
       </ThemeProvider>
     </ErrorBoundary>
   );

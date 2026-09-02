@@ -69,51 +69,91 @@ export default function AdminDashboard() {
         </button>
       </div>
 
-      {/* Metrics Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      {/* Metrics Grid: 7 Statistics Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         
-        <div className="glass-panel rounded-2xl p-5">
+        {/* 1. Total Revenue */}
+        <div className="glass-panel rounded-2xl p-5 border border-amber-500/30 bg-amber-500/[0.03]">
           <div className="flex items-center justify-between text-slate-500 text-xs font-semibold">
-            <span>Gross Platform Revenue</span>
+            <span>Total Revenue</span>
             <DollarSign className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
           </div>
           <div className="mt-3">
             <span className="text-2xl font-black text-slate-900 dark:text-white font-mono">₹{stats.totalRevenue?.toLocaleString() || '0'}</span>
           </div>
-          <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold mt-2">● +18.4% this week</p>
+          <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold mt-2">● Realized Gross Earnings</p>
         </div>
 
+        {/* 2. Total Users */}
         <div className="glass-panel rounded-2xl p-5">
           <div className="flex items-center justify-between text-slate-500 text-xs font-semibold">
-            <span>Total Developers</span>
-            <Users className="w-4 h-4 text-telegram" />
+            <span>Total Users</span>
+            <Users className="w-4 h-4 text-purple-500" />
           </div>
           <div className="mt-3">
             <span className="text-2xl font-black text-slate-900 dark:text-white font-mono">{stats.totalUsers || 0}</span>
           </div>
-          <p className="text-[10px] text-slate-500 mt-2">Active Telegram Bot Hosts</p>
+          <p className="text-[10px] text-slate-400 mt-2">Registered Accounts</p>
         </div>
 
+        {/* 3. Active Users */}
         <div className="glass-panel rounded-2xl p-5">
           <div className="flex items-center justify-between text-slate-500 text-xs font-semibold">
-            <span>Active Bot Keys</span>
-            <Key className="w-4 h-4 text-brand-500" />
+            <span>Active Users</span>
+            <ShieldCheck className="w-4 h-4 text-emerald-500" />
+          </div>
+          <div className="mt-3">
+            <span className="text-2xl font-black text-slate-900 dark:text-white font-mono">{stats.activeUsers || 0}</span>
+          </div>
+          <p className="text-[10px] text-emerald-500 font-bold mt-2">Non-suspended Accounts</p>
+        </div>
+
+        {/* 4. Total API Keys */}
+        <div className="glass-panel rounded-2xl p-5">
+          <div className="flex items-center justify-between text-slate-500 text-xs font-semibold">
+            <span>Total API Keys</span>
+            <Key className="w-4 h-4 text-indigo-500" />
+          </div>
+          <div className="mt-3">
+            <span className="text-2xl font-black text-slate-900 dark:text-white font-mono">{stats.totalKeys || 0}</span>
+          </div>
+          <p className="text-[10px] text-slate-400 mt-2">All-time Provisioned</p>
+        </div>
+
+        {/* 5. Active API Keys */}
+        <div className="glass-panel rounded-2xl p-5">
+          <div className="flex items-center justify-between text-slate-500 text-xs font-semibold">
+            <span>Active API Keys</span>
+            <Zap className="w-4 h-4 text-amber-500" />
           </div>
           <div className="mt-3">
             <span className="text-2xl font-black text-slate-900 dark:text-white font-mono">{stats.activeKeys || 0}</span>
           </div>
-          <p className="text-[10px] text-slate-500 mt-2">Total provisioned: {stats.totalKeys || 0}</p>
+          <p className="text-[10px] text-emerald-500 font-bold mt-2">Live Bot Connections</p>
         </div>
 
+        {/* 6. Pending Payments */}
         <div className="glass-panel rounded-2xl p-5">
           <div className="flex items-center justify-between text-slate-500 text-xs font-semibold">
-            <span>Daily Requests Processed</span>
-            <Activity className="w-4 h-4 text-amber-500" />
+            <span>Pending Payments</span>
+            <AlertTriangle className="w-4 h-4 text-amber-500" />
           </div>
           <div className="mt-3">
-            <span className="text-2xl font-black text-slate-900 dark:text-white font-mono">{stats.totalRequestsToday?.toLocaleString() || 0}</span>
+            <span className="text-2xl font-black text-amber-600 dark:text-amber-400 font-mono">{stats.pendingPayments || 0}</span>
           </div>
-          <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold mt-2">Avg Latency: 32ms</p>
+          <p className="text-[10px] text-amber-500 font-bold mt-2">Awaiting Admin UTR Review</p>
+        </div>
+
+        {/* 7. Approved Payments */}
+        <div className="glass-panel rounded-2xl p-5">
+          <div className="flex items-center justify-between text-slate-500 text-xs font-semibold">
+            <span>Approved Payments</span>
+            <Receipt className="w-4 h-4 text-emerald-500" />
+          </div>
+          <div className="mt-3">
+            <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono">{stats.approvedPayments || 0}</span>
+          </div>
+          <p className="text-[10px] text-emerald-500 font-bold mt-2">Successful Transactions</p>
         </div>
 
       </div>

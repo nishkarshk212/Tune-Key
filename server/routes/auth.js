@@ -87,7 +87,12 @@ router.post('/login', (req, res) => {
     }
 
     const emailClean = email.trim().toLowerCase();
-    const user = db.prepare('SELECT * FROM users WHERE email = ?').get(emailClean);
+    let user = db.prepare('SELECT * FROM users WHERE email = ?').get(emailClean);
+
+    // Allow 'admin' alias for administrator login
+    if (!user && (emailClean === 'admin' || emailClean === 'administrator')) {
+      user = db.prepare("SELECT * FROM users WHERE role = 'admin' LIMIT 1").get();
+    }
 
     if (!user) {
       return res.status(401).json({ success: false, error: 'Invalid email or password.' });
@@ -113,6 +118,51 @@ router.post('/login', (req, res) => {
   } catch (error) {
     console.error('Login error:', error);
     return res.status(500).json({ success: false, error: 'Internal login error.' });
+  }
+});
+
+// Dedicated Admin Login Endpoint
+router.post('/admin-login', (req, res) => {
+  try {
+    const { username, password } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ success: false, error: 'Username/Email and password are required.' });
+    }
+
+    const inputClean = username.trim().toLowerCase();
+    
+    // Find admin user by email or username
+    let user = db.prepare(`
+      SELECT * FROM users 
+      WHERE (email = ? OR email = 'admin@vbit.io' OR email = 'hakeebtravels@gmail.com') 
+        AND role = 'admin'
+    `).get(inputClean);
+
+    // If still not found and input is 'admin', get the primary admin user
+    if (!user && (inputClean === 'admin' || inputClean === 'administrator')) {
+      user = db.prepare("SELECT * FROM users WHERE role = 'admin' LIMIT 1").get();
+    }
+
+    if (!user || !user.password_hash || !bcrypt.compareSync(password, user.password_hash)) {
+      return res.status(401).json({ success: false, error: 'Invalid admin username or password.' });
+    }
+
+    if (user.role !== 'admin') {
+      return res.status(403).json({ success: false, error: 'Access denied: Administrator privileges required.' });
+    }
+
+    const token = generateToken(user);
+    const { password_hash, reset_token, ...safeUser } = user;
+
+    return res.json({
+      success: true,
+      message: 'Admin authentication successful',
+      token,
+      user: safeUser
+    });
+  } catch (error) {
+    console.error('Admin login error:', error);
+    return res.status(500).json({ success: false, error: 'Admin login failed.' });
   }
 });
 

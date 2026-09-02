@@ -129,6 +129,21 @@ router.post('/keys/create', authenticateToken, (req, res) => {
       || db.prepare("SELECT * FROM plans WHERE id = 'plan_free'").get()
       || { id: 'plan_free', name: 'FREE', tier: 'Free', daily_quota: 500, total_quota: 15000, rps_limit: 5, price: 0 };
 
+    const isFreePlan = plan.id === 'plan_free' || plan.price === 0;
+
+    // Check one-time Free key rule
+    if (isFreePlan) {
+      const userRecord = db.prepare('SELECT free_claimed FROM users WHERE id = ?').get(userId);
+      const existingFreeKey = db.prepare("SELECT id FROM api_keys WHERE user_id = ? AND (plan_id = 'plan_free' OR type = 'free')").get(userId);
+      
+      if (userRecord?.free_claimed || existingFreeKey) {
+        return res.status(400).json({
+          success: false,
+          error: 'You have already claimed your Free API Key. Please buy a subscription to get another API Key.'
+        });
+      }
+    }
+
     // Enforce 1 active API key per plan subscription
     const existingKey = db.prepare(`
       SELECT * FROM api_keys 
@@ -143,7 +158,7 @@ router.post('/keys/create', authenticateToken, (req, res) => {
     }
 
     // If paid plan, verify user has an order or sufficient wallet balance
-    if (plan.id !== 'plan_free' && plan.price > 0) {
+    if (!isFreePlan && plan.price > 0) {
       const hasOrder = db.prepare(`
         SELECT * FROM orders 
         WHERE user_id = ? AND plan_id = ? AND payment_status = 'completed'
@@ -168,14 +183,15 @@ router.post('/keys/create', authenticateToken, (req, res) => {
     const newClientToken = generateClientToken();
     const keyId = `key_${uuidv4().replace(/-/g, '').slice(0, 10)}`;
 
+    const purchaseDate = new Date();
     const expires = new Date();
     expires.setDate(expires.getDate() + 30);
 
     db.prepare(`
       INSERT INTO api_keys (
-        id, user_id, plan_id, key_name, api_key, client_token, status,
-        daily_quota, total_quota, rps_limit, allowed_ips, bot_type, expires_at
-      ) VALUES (?, ?, ?, ?, ?, ?, 'active', ?, ?, ?, ?, ?, ?)
+        id, user_id, plan_id, key_name, api_key, client_token, status, type,
+        daily_quota, total_quota, rps_limit, allowed_ips, bot_type, purchase_date, expires_at, regeneration_count
+      ) VALUES (?, ?, ?, ?, ?, ?, 'active', ?, ?, ?, ?, ?, ?, ?, ?, 0)
     `).run(
       keyId,
       userId,
@@ -183,13 +199,20 @@ router.post('/keys/create', authenticateToken, (req, res) => {
       keyName?.trim() || `${plan.name} Bot Key`,
       newApiKey,
       newClientToken,
+      isFreePlan ? 'free' : 'paid',
       plan.daily_quota || 500,
       plan.total_quota || 15000,
       plan.rps_limit || 5,
       allowedIps?.trim() || '',
       botType || 'YukkiMusic Bot v3',
+      purchaseDate.toISOString(),
       expires.toISOString()
     );
+
+    // Mark free_claimed if this was a free key
+    if (isFreePlan) {
+      db.prepare('UPDATE users SET free_claimed = 1 WHERE id = ?').run(userId);
+    }
 
     const created = db.prepare(`
       SELECT k.*, p.name as plan_name, p.tier as plan_tier
@@ -200,7 +223,7 @@ router.post('/keys/create', authenticateToken, (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: `🎉 Successfully generated ${plan.name} API Key (${plan.daily_quota} req/day)!`,
+      message: `🎉 Successfully generated ${plan.name} API Key (${plan.daily_quota} req/day, valid for 30 days)!`,
       key: created
     });
   } catch (error) {
@@ -236,7 +259,7 @@ router.patch('/keys/:id/toggle', authenticateToken, (req, res) => {
   }
 });
 
-// Regenerate API Key Credentials
+// Regenerate API Key Credentials (Preserves original expiration and subscription)
 router.post('/keys/:id/regenerate', authenticateToken, (req, res) => {
   try {
     const { id } = req.params;
@@ -249,15 +272,16 @@ router.post('/keys/:id/regenerate', authenticateToken, (req, res) => {
     const newApiKey = generateApiKey();
     const newClientToken = generateClientToken();
 
+    // Regenerate credential string while strictly preserving user, plan, quotas, purchase_date, and expires_at
     db.prepare(`
       UPDATE api_keys
-      SET api_key = ?, client_token = ?, status = 'active'
+      SET api_key = ?, client_token = ?, status = 'active', regeneration_count = COALESCE(regeneration_count, 0) + 1
       WHERE id = ?
     `).run(newApiKey, newClientToken, id);
 
     return res.json({
       success: true,
-      message: 'API Key credentials regenerated successfully. Update your Telegram bot config with the new key.',
+      message: 'API Key credentials regenerated successfully. Your 30-day expiration date remains unchanged. Update your Telegram bot config with the new key.',
       api_key: newApiKey,
       client_token: newClientToken
     });
@@ -399,6 +423,11 @@ router.get('/wallet', authenticateToken, (req, res) => {
       .filter(t => t.payment_status === 'completed' && t.plan_id && t.plan_id !== 'wallet_deposit')
       .reduce((sum, t) => sum + (t.amount || 0), 0);
 
+    const upiRow = db.prepare("SELECT value FROM site_settings WHERE key = 'upi_id'").get();
+    const merchantRow = db.prepare("SELECT value FROM site_settings WHERE key = 'merchant_name'").get();
+    const qrRow = db.prepare("SELECT value FROM site_settings WHERE key = 'qr_url'").get();
+    const instructionsRow = db.prepare("SELECT value FROM site_settings WHERE key = 'payment_instructions'").get();
+
     return res.json({
       success: true,
       balance: user?.balance || 0.0,
@@ -406,9 +435,10 @@ router.get('/wallet', authenticateToken, (req, res) => {
       totalSpent,
       transactions,
       merchantUpi: {
-        upiId: 'mohammadhakeeb@fam',
-        merchantName: 'Mohammed Hakeeb',
-        qrUrl: '/assets/paytm_qr.jpg'
+        upiId: upiRow?.value || 'mohammadhakeeb@fam',
+        merchantName: merchantRow?.value || 'Mohammed Hakeeb',
+        qrUrl: qrRow?.value || '/assets/paytm_qr.jpg',
+        instructions: instructionsRow?.value || 'Scan with any UPI app (Paytm, Google Pay, PhonePe, BHIM, Cred) and submit your 12-digit UTR transaction number.'
       }
     });
   } catch (error) {

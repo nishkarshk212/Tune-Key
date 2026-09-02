@@ -242,18 +242,26 @@ export default function MyKeys() {
                         <span>{k.key_name}</span>
                       </h3>
 
-                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${
                         isRevoked
-                          ? 'bg-red-500/20 text-red-500 dark:text-red-400 border border-red-500/30'
+                          ? 'bg-rose-500/20 text-rose-500 border border-rose-500/30'
+                          : !isActive && k.status === 'expired'
+                          ? 'bg-red-500/20 text-red-500 border border-red-500/30'
                           : isActive
                           ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
                           : 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30'
                       }`}>
-                        {k.status}
+                        {k.expires_at && new Date(k.expires_at) < new Date() ? 'EXPIRED' : k.status}
                       </span>
 
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700">
-                        {k.plan_name || 'Starter Bot Tier'}
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30">
+                        {k.plan_name || 'Starter Plan'}
+                      </span>
+
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                        k.type === 'paid' ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+                      }`}>
+                        {k.type === 'paid' ? 'Paid (30D)' : 'Free Key'}
                       </span>
 
                       <span className="text-xs text-slate-500 flex items-center space-x-1">
@@ -261,6 +269,22 @@ export default function MyKeys() {
                         <span>{k.bot_type || 'Telegram Bot'}</span>
                       </span>
                     </div>
+
+                    {/* Expiration alert if expired */}
+                    {k.expires_at && new Date(k.expires_at) < new Date() && (
+                      <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-500 dark:text-red-400 text-xs flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                          <span><strong>Your subscription has expired.</strong> API calls from this key are paused.</span>
+                        </div>
+                        <a
+                          href="/dashboard/plans"
+                          className="px-3 py-1 rounded-lg bg-red-600 hover:bg-red-500 text-white font-bold text-[11px] transition-colors"
+                        >
+                          Renew Subscription
+                        </a>
+                      </div>
+                    )}
 
                     {/* API Key Box */}
                     <div className="space-y-2 text-xs font-mono">
@@ -302,16 +326,20 @@ export default function MyKeys() {
                     {/* Metadata chips */}
                     <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 dark:text-slate-400 pt-1">
                       <div className="flex items-center space-x-1.5">
-                        <Globe className="w-3.5 h-3.5" />
-                        <span>IP Whitelist: <strong className="text-slate-800 dark:text-slate-300">{k.allowed_ips || 'Any IP (Open)'}</strong></span>
+                        <Clock className="w-3.5 h-3.5 text-purple-400" />
+                        <span>Purchased: <strong className="text-slate-800 dark:text-slate-300">{k.purchase_date ? new Date(k.purchase_date).toLocaleDateString() : (k.created_at ? new Date(k.created_at).toLocaleDateString() : 'N/A')}</strong></span>
                       </div>
                       <div className="flex items-center space-x-1.5">
-                        <Clock className="w-3.5 h-3.5" />
-                        <span>Expires: <strong className="text-slate-800 dark:text-slate-300">{k.expires_at ? new Date(k.expires_at).toLocaleDateString() : 'Never'}</strong></span>
+                        <Calendar className="w-3.5 h-3.5 text-amber-400" />
+                        <span>Expires: <strong className="text-slate-800 dark:text-slate-300">{k.expires_at ? new Date(k.expires_at).toLocaleDateString() : 'Lifetime'}</strong></span>
                       </div>
                       <div className="flex items-center space-x-1.5">
-                        <Activity className="w-3.5 h-3.5" />
-                        <span>Limit: <strong className="text-slate-800 dark:text-slate-300">{k.rps_limit} req/sec</strong></span>
+                        <Zap className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Days Remaining: <strong className="text-emerald-500">
+                          {k.expires_at 
+                            ? Math.max(0, Math.ceil((new Date(k.expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24))) + ' Days'
+                            : 'Unlimited'}
+                        </strong></span>
                       </div>
                     </div>
 

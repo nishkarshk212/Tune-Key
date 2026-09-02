@@ -52,13 +52,19 @@ export function authenticateApiKey(req, res, next) {
     });
   }
 
-  // Check expiration
+  // Check 30-day subscription expiration
   if (keyRecord.expires_at) {
     const expiryDate = new Date(keyRecord.expires_at);
     if (new Date() > expiryDate) {
+      if (keyRecord.status === 'active') {
+        try {
+          db.prepare("UPDATE api_keys SET status = 'expired' WHERE id = ?").run(keyRecord.id);
+        } catch(e) {}
+      }
       return res.status(403).json({
-        error: 'Key Expired',
-        message: 'This subscription key expired on ' + expiryDate.toISOString() + '. Please renew your plan.'
+        error: 'Subscription Expired',
+        message: 'Your API Key subscription has expired on ' + expiryDate.toLocaleDateString() + '. Please purchase or renew a subscription to resume access.',
+        status: 'expired'
       });
     }
   }

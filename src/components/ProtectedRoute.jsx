@@ -8,21 +8,24 @@ export default function ProtectedRoute({ children, requireAdmin = false }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0B0F17]">
+      <div className="min-h-screen flex items-center justify-center bg-[#080B12]">
         <div className="flex flex-col items-center space-y-4">
-          <div className="w-12 h-12 border-4 border-brand-500/30 border-t-brand-500 rounded-full animate-spin"></div>
-          <p className="text-slate-400 text-sm font-medium tracking-wide">Authenticating TuneKey session...</p>
+          <div className="w-10 h-10 border-3 border-amber-500/30 border-t-amber-500 rounded-full animate-spin"></div>
+          <p className="text-slate-400 text-xs font-medium tracking-wide">Verifying credentials...</p>
         </div>
       </div>
     );
   }
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+  if (requireAdmin) {
+    if (!isAuthenticated || !isAdmin) {
+      return <Navigate to="/admin/login" state={{ from: location }} replace />;
+    }
+    return children;
   }
 
-  if (requireAdmin && !isAdmin) {
-    return <Navigate to="/dashboard" replace />;
+  if (!isAuthenticated) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   return children;

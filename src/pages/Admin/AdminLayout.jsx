@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, Outlet, useLocation } from 'react-router-dom';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { 
@@ -9,19 +9,21 @@ import {
   Receipt, 
   Terminal, 
   ArrowLeft, 
-  Radio, 
   Activity, 
   Server, 
-  Zap,
-  Sliders,
-  Sun,
+  Layers,
+  CreditCard,
+  Settings,
+  LogOut,
+  Sun, 
   Moon
 } from 'lucide-react';
 
 export default function AdminLayout() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const isCurrent = (path) => {
     if (path === '/admin' && location.pathname === '/admin') return true;
@@ -29,12 +31,21 @@ export default function AdminLayout() {
     return false;
   };
 
+  const handleLogout = () => {
+    logout();
+    navigate('/admin/login');
+  };
+
   const navItems = [
-    { label: 'Admin Overview', path: '/admin', icon: Activity },
-    { label: 'UTR & Orders Approval', path: '/admin/orders', icon: Receipt },
-    { label: 'User Accounts', path: '/admin/users', icon: Users },
-    { label: 'Global API Keys', path: '/admin/keys', icon: Key },
-    { label: 'Live Traffic Logs', path: '/admin/logs', icon: Terminal },
+    { label: 'Dashboard', path: '/admin', icon: Activity },
+    { label: 'Users', path: '/admin/users', icon: Users },
+    { label: 'API Keys', path: '/admin/keys', icon: Key },
+    { label: 'Services', path: '/admin/services', icon: Server },
+    { label: 'Plans', path: '/admin/plans', icon: Layers },
+    { label: 'Payments', path: '/admin/orders', icon: Receipt },
+    { label: 'Payment Settings', path: '/admin/payment-settings', icon: CreditCard },
+    { label: 'Settings', path: '/admin/settings', icon: Settings },
+    { label: 'Logs', path: '/admin/logs', icon: Terminal },
   ];
 
   return (
@@ -93,13 +104,22 @@ export default function AdminLayout() {
             </div>
           </div>
 
-          <Link
-            to="/dashboard"
-            className="w-full flex items-center justify-center space-x-2 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold border border-slate-200 dark:border-slate-700 transition-colors"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Return to User Dashboard</span>
-          </Link>
+          <div className="flex items-center space-x-2">
+            <Link
+              to="/dashboard"
+              className="flex-1 flex items-center justify-center space-x-1.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold border border-slate-200 dark:border-slate-700 transition-colors"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Dashboard</span>
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="flex items-center justify-center p-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 text-xs font-semibold border border-rose-500/20 transition-colors cursor-pointer"
+              title="Admin Logout"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </aside>
 

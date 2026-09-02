@@ -30,6 +30,7 @@ export function initDatabase() {
       balance REAL DEFAULT 0.0,
       is_banned INTEGER DEFAULT 0,
       status TEXT DEFAULT 'active',
+      free_claimed INTEGER DEFAULT 0,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
@@ -39,6 +40,7 @@ export function initDatabase() {
   try { db.exec("ALTER TABLE users ADD COLUMN is_banned INTEGER DEFAULT 0;"); } catch(e){}
   try { db.exec("ALTER TABLE users ADD COLUMN status TEXT DEFAULT 'active';"); } catch(e){}
   try { db.exec("ALTER TABLE users ADD COLUMN avatar_url TEXT;"); } catch(e){}
+  try { db.exec("ALTER TABLE users ADD COLUMN free_claimed INTEGER DEFAULT 0;"); } catch(e){}
 
   // 2. Plans Table
   db.exec(`
@@ -69,6 +71,7 @@ export function initDatabase() {
       api_key TEXT UNIQUE NOT NULL,
       client_token TEXT NOT NULL,
       status TEXT DEFAULT 'active',
+      type TEXT DEFAULT 'free',
       bot_type TEXT DEFAULT 'YukkiMusic Bot v3',
       daily_quota INTEGER DEFAULT 500,
       today_requests INTEGER DEFAULT 0,
@@ -76,7 +79,9 @@ export function initDatabase() {
       used_quota INTEGER DEFAULT 0,
       rps_limit INTEGER DEFAULT 5,
       allowed_ips TEXT,
+      purchase_date DATETIME,
       expires_at DATETIME,
+      regeneration_count INTEGER DEFAULT 0,
       last_used_at DATETIME,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -89,6 +94,9 @@ export function initDatabase() {
   try { db.exec("ALTER TABLE api_keys ADD COLUMN last_used_at DATETIME;"); } catch(e){}
   try { db.exec("ALTER TABLE api_keys ADD COLUMN bot_type TEXT DEFAULT 'YukkiMusic Bot v3';"); } catch(e){}
   try { db.exec("ALTER TABLE api_keys ADD COLUMN allowed_ips TEXT;"); } catch(e){}
+  try { db.exec("ALTER TABLE api_keys ADD COLUMN type TEXT DEFAULT 'free';"); } catch(e){}
+  try { db.exec("ALTER TABLE api_keys ADD COLUMN purchase_date DATETIME;"); } catch(e){}
+  try { db.exec("ALTER TABLE api_keys ADD COLUMN regeneration_count INTEGER DEFAULT 0;"); } catch(e){}
 
   // 4. Usage Logs Table
   db.exec(`
@@ -138,6 +146,29 @@ export function initDatabase() {
     );
   `);
 
+  // 7. Site Settings Table (Dynamic UPI ID, QR, instructions)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS site_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  // 8. Services Table (API Services Management)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS services (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      description TEXT,
+      price REAL NOT NULL,
+      requests_per_day INTEGER DEFAULT 1000,
+      requests_per_month INTEGER DEFAULT 30000,
+      is_active INTEGER DEFAULT 1,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
   seedData();
 }
 
@@ -173,14 +204,51 @@ function seedData() {
     } catch(e) {}
   }
 
-  // Seed Super-Admin if not existing
-  const adminUser = db.prepare("SELECT id FROM users WHERE email = 'hakeebtravels@gmail.com'").get();
-  if (!adminUser) {
-    const adminPasswordHash = bcrypt.hashSync('AdminPassword123!', 10);
+  // Seed default site settings
+  const settingsCount = db.prepare('SELECT COUNT(*) as count FROM site_settings').get();
+  if (settingsCount.count === 0) {
+    const insertSetting = db.prepare('INSERT OR IGNORE INTO site_settings (key, value) VALUES (?, ?)');
+    insertSetting.run('upi_id', 'mohammadhakeeb@fam');
+    insertSetting.run('merchant_name', 'Mohammed Hakeeb');
+    insertSetting.run('qr_url', '/assets/paytm_qr.jpg');
+    insertSetting.run('payment_instructions', 'Scan with any UPI app (Paytm, Google Pay, PhonePe, BHIM, Cred) and submit your 12-digit UTR transaction number.');
+    insertSetting.run('admin_username', 'admin');
+  }
+
+  // Seed default services if empty
+  const serviceCount = db.prepare('SELECT COUNT(*) as count FROM services').get();
+  if (serviceCount.count === 0) {
+    const insertService = db.prepare(`
+      INSERT INTO services (id, name, description, price, requests_per_day, requests_per_month, is_active)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `);
+    insertService.run('srv_yt_stream', 'YouTube Audio Stream Engine', 'Ultra-fast direct 160kbps Opus audio stream extraction for Telegram Voice Chats', 99, 1500, 45000, 1);
+    insertService.run('srv_yt_search', 'YouTube Search & Metadata API', 'Fast video/audio search with title, duration, views, thumbnails, and channel info', 49, 1000, 30000, 1);
+    insertService.run('srv_yt_lyrics', 'Track Lyrics & Translation API', 'Multi-language lyrics scraper and subtitle translator for music players', 49, 1000, 30000, 1);
+  }
+
+  // Seed Super-Admin accounts
+  const adminPasswordHash = bcrypt.hashSync('admin123', 10);
+  
+  // Seed admin@vbit.io
+  const defaultAdmin = db.prepare("SELECT id FROM users WHERE email = 'admin@vbit.io' OR email = 'admin'").get();
+  if (!defaultAdmin) {
+    db.prepare(`
+      INSERT INTO users (id, email, password_hash, name, role, balance, is_banned, status, avatar_url)
+      VALUES ('usr_admin_default', 'admin@vbit.io', ?, 'Administrator', 'admin', 0.0, 0, 'active', 'https://api.dicebear.com/7.x/bottts/svg?seed=admin_master')
+    `).run(adminPasswordHash);
+  }
+
+  // Also ensure hakeebtravels@gmail.com has admin password
+  const hakeebAdmin = db.prepare("SELECT id FROM users WHERE email = 'hakeebtravels@gmail.com'").get();
+  if (!hakeebAdmin) {
     db.prepare(`
       INSERT INTO users (id, email, password_hash, name, role, balance, is_banned, status, avatar_url)
       VALUES ('usr_admin_master', 'hakeebtravels@gmail.com', ?, 'Mohammed Hakeeb', 'admin', 0.0, 0, 'active', 'https://api.dicebear.com/7.x/bottts/svg?seed=admin_master')
     `).run(adminPasswordHash);
+  } else {
+    // Ensure password matches admin123 if needed
+    db.prepare("UPDATE users SET password_hash = ? WHERE email = 'hakeebtravels@gmail.com'").run(adminPasswordHash);
   }
 }
 

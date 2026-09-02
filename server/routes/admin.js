@@ -1,27 +1,31 @@
 import express from 'express';
+import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 import db from '../database.js';
 import { authenticateToken, requireAdmin } from '../middleware/auth.js';
-import { generateApiKeyForPlan, generateClientToken } from '../services/keyService.js';
+import { generateApiKeyForPlan, generateApiKey, generateClientToken } from '../services/keyService.js';
 
 const router = express.Router();
 
 // Admin Guard applied to all routes in this router
 router.use(authenticateToken, requireAdmin);
 
-// Overview Dashboard Statistics
+// 1. Overview Dashboard Statistics (7 KPI Cards)
 router.get('/overview', (req, res) => {
   try {
-    const totalUsers = db.prepare('SELECT COUNT(*) as count FROM users').get().count;
-    const totalKeys = db.prepare('SELECT COUNT(*) as count FROM api_keys').get().count;
-    const activeKeys = db.prepare("SELECT COUNT(*) as count FROM api_keys WHERE status = 'active'").get().count;
-    const totalOrders = db.prepare('SELECT COUNT(*) as count FROM orders').get().count;
+    const totalUsers = db.prepare('SELECT COUNT(*) as count FROM users WHERE role != "admin"').get()?.count || 0;
+    const activeUsers = db.prepare('SELECT COUNT(*) as count FROM users WHERE role != "admin" AND is_banned = 0').get()?.count || 0;
+    const totalKeys = db.prepare('SELECT COUNT(*) as count FROM api_keys').get()?.count || 0;
+    const activeKeys = db.prepare("SELECT COUNT(*) as count FROM api_keys WHERE status = 'active'").get()?.count || 0;
+    
+    const pendingPayments = db.prepare("SELECT COUNT(*) as count FROM orders WHERE payment_status = 'pending_verification'").get()?.count || 0;
+    const approvedPayments = db.prepare("SELECT COUNT(*) as count FROM orders WHERE payment_status = 'completed'").get()?.count || 0;
     
     const revenueResult = db.prepare("SELECT SUM(amount) as total FROM orders WHERE payment_status = 'completed'").get();
     const totalRevenue = revenueResult?.total || 0;
 
-    const totalApiRequests = db.prepare('SELECT COUNT(*) as count FROM usage_logs').get().count;
-    const todayRequests = db.prepare('SELECT SUM(today_requests) as sum FROM api_keys').get().sum || 0;
+    const totalApiRequests = db.prepare('SELECT COUNT(*) as count FROM usage_logs').get()?.count || 0;
+    const todayRequests = db.prepare('SELECT SUM(today_requests) as sum FROM api_keys').get()?.sum || 0;
 
     // Recent orders
     const recentOrders = db.prepare(`
@@ -45,9 +49,11 @@ router.get('/overview', (req, res) => {
       success: true,
       stats: {
         totalUsers,
+        activeUsers,
         totalKeys,
         activeKeys,
-        totalOrders,
+        pendingPayments,
+        approvedPayments,
         totalRevenue: Math.round(totalRevenue * 100) / 100,
         totalApiRequests,
         todayRequests,
@@ -63,15 +69,17 @@ router.get('/overview', (req, res) => {
   }
 });
 
-// Get Users List
+// 2. User Management
 router.get('/users', (req, res) => {
   try {
     const users = db.prepare(`
-      SELECT u.id, u.email, u.name, u.role, u.balance, u.is_banned, u.created_at,
+      SELECT u.id, u.email, u.name, u.role, u.balance, u.is_banned, u.status, u.free_claimed, u.created_at,
              COUNT(k.id) as keys_count,
-             COALESCE(SUM(k.used_quota), 0) as total_used_quota
+             COALESCE(SUM(k.used_quota), 0) as total_used_quota,
+             (SELECT p.name FROM api_keys ak JOIN plans p ON ak.plan_id = p.id WHERE ak.user_id = u.id AND ak.status = 'active' ORDER BY ak.created_at DESC LIMIT 1) as current_plan
       FROM users u
       LEFT JOIN api_keys k ON u.id = k.user_id
+      WHERE u.role != 'admin' OR u.email != 'admin'
       GROUP BY u.id
       ORDER BY u.created_at DESC
     `).all();
@@ -82,39 +90,48 @@ router.get('/users', (req, res) => {
   }
 });
 
-// Toggle User Ban / Suspension Status
+router.get('/users/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = db.prepare('SELECT id, email, name, role, balance, is_banned, status, free_claimed, created_at FROM users WHERE id = ?').get(id);
+    if (!user) return res.status(404).json({ success: false, error: 'User not found' });
+
+    const keys = db.prepare('SELECT k.*, p.name as plan_name FROM api_keys k LEFT JOIN plans p ON k.plan_id = p.id WHERE k.user_id = ?').all(id);
+    const orders = db.prepare('SELECT o.*, p.name as plan_name FROM orders o LEFT JOIN plans p ON o.plan_id = p.id WHERE o.user_id = ? ORDER BY o.created_at DESC').all(id);
+
+    return res.json({ success: true, user, keys, orders });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: 'Failed to fetch user profile' });
+  }
+});
+
 router.patch('/users/:id/ban', (req, res) => {
   try {
     const { id } = req.params;
     const user = db.prepare('SELECT id, is_banned, role FROM users WHERE id = ?').get(id);
     
-    if (!user) {
-      return res.status(404).json({ success: false, error: 'User not found' });
-    }
-
-    if (user.role === 'admin') {
-      return res.status(400).json({ success: false, error: 'Cannot suspend an administrator account.' });
-    }
+    if (!user) return res.status(404).json({ success: false, error: 'User not found' });
+    if (user.role === 'admin') return res.status(400).json({ success: false, error: 'Cannot suspend an administrator account.' });
 
     const newBanStatus = user.is_banned ? 0 : 1;
-    db.prepare('UPDATE users SET is_banned = ? WHERE id = ?').run(newBanStatus, id);
+    const newStatus = newBanStatus ? 'suspended' : 'active';
+    db.prepare('UPDATE users SET is_banned = ?, status = ? WHERE id = ?').run(newBanStatus, newStatus, id);
 
     return res.json({
       success: true,
-      message: `User account has been ${newBanStatus ? 'suspended' : 'activated'}.`,
-      is_banned: newBanStatus
+      message: `User account has been ${newBanStatus ? 'deactivated/suspended' : 'activated'}.`,
+      is_banned: newBanStatus,
+      status: newStatus
     });
   } catch (error) {
     return res.status(500).json({ success: false, error: 'Failed to update user status' });
   }
 });
 
-// Update User Balance / Quota
 router.patch('/users/:id/balance', (req, res) => {
   try {
     const { id } = req.params;
     const { balance } = req.body;
-
     if (balance === undefined || isNaN(balance)) {
       return res.status(400).json({ success: false, error: 'Valid numeric balance is required' });
     }
@@ -126,11 +143,11 @@ router.patch('/users/:id/balance', (req, res) => {
   }
 });
 
-// Get Global API Keys List
+// 3. API Key & Subscription Management
 router.get('/keys', (req, res) => {
   try {
     const keys = db.prepare(`
-      SELECT k.*, u.email as user_email, u.name as user_name, p.name as plan_name
+      SELECT k.*, u.email as user_email, u.name as user_name, p.name as plan_name, p.tier as plan_tier
       FROM api_keys k
       JOIN users u ON k.user_id = u.id
       LEFT JOIN plans p ON k.plan_id = p.id
@@ -143,11 +160,10 @@ router.get('/keys', (req, res) => {
   }
 });
 
-// Update Key Quotas / Expiration by Admin
 router.put('/keys/:id', (req, res) => {
   try {
     const { id } = req.params;
-    const { status, daily_quota, total_quota, rps_limit, expires_at } = req.body;
+    const { status, daily_quota, total_quota, rps_limit, expires_at, key_name } = req.body;
 
     db.prepare(`
       UPDATE api_keys
@@ -155,9 +171,10 @@ router.put('/keys/:id', (req, res) => {
           daily_quota = COALESCE(?, daily_quota),
           total_quota = COALESCE(?, total_quota),
           rps_limit = COALESCE(?, rps_limit),
-          expires_at = COALESCE(?, expires_at)
+          expires_at = COALESCE(?, expires_at),
+          key_name = COALESCE(?, key_name)
       WHERE id = ?
-    `).run(status, daily_quota, total_quota, rps_limit, expires_at, id);
+    `).run(status, daily_quota, total_quota, rps_limit, expires_at, key_name, id);
 
     return res.json({ success: true, message: 'API Key rules updated successfully' });
   } catch (error) {
@@ -165,7 +182,259 @@ router.put('/keys/:id', (req, res) => {
   }
 });
 
-// Get Global Orders
+router.post('/keys/:id/regenerate', (req, res) => {
+  try {
+    const { id } = req.params;
+    const key = db.prepare('SELECT * FROM api_keys WHERE id = ?').get(id);
+    if (!key) return res.status(404).json({ success: false, error: 'API key not found' });
+
+    const newApiKey = generateApiKey();
+    const newClientToken = generateClientToken();
+
+    db.prepare(`
+      UPDATE api_keys
+      SET api_key = ?, client_token = ?, status = 'active', regeneration_count = COALESCE(regeneration_count, 0) + 1
+      WHERE id = ?
+    `).run(newApiKey, newClientToken, id);
+
+    return res.json({
+      success: true,
+      message: 'API Key regenerated successfully. Expiration date retained.',
+      api_key: newApiKey
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: 'Failed to regenerate key' });
+  }
+});
+
+router.post('/keys/:id/extend', (req, res) => {
+  try {
+    const { id } = req.params;
+    const { days = 30 } = req.body;
+    const key = db.prepare('SELECT * FROM api_keys WHERE id = ?').get(id);
+    if (!key) return res.status(404).json({ success: false, error: 'API key not found' });
+
+    const currentExpiry = key.expires_at ? new Date(key.expires_at) : new Date();
+    const baseDate = currentExpiry > new Date() ? currentExpiry : new Date();
+    baseDate.setDate(baseDate.getDate() + parseInt(days));
+
+    db.prepare("UPDATE api_keys SET expires_at = ?, status = 'active' WHERE id = ?").run(baseDate.toISOString(), id);
+
+    return res.json({
+      success: true,
+      message: `Subscription extended by ${days} days. New expiry: ${baseDate.toLocaleDateString()}`,
+      expires_at: baseDate.toISOString()
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: 'Failed to extend subscription' });
+  }
+});
+
+// 4. Payment Settings (UPI ID, QR, Instructions)
+router.get('/payment-settings', (req, res) => {
+  try {
+    const rows = db.prepare('SELECT key, value FROM site_settings').all();
+    const settings = {};
+    for (const r of rows) settings[r.key] = r.value;
+
+    return res.json({
+      success: true,
+      settings: {
+        upi_id: settings.upi_id || 'mohammadhakeeb@fam',
+        merchant_name: settings.merchant_name || 'Mohammed Hakeeb',
+        qr_url: settings.qr_url || '/assets/paytm_qr.jpg',
+        payment_instructions: settings.payment_instructions || 'Scan with any UPI app (Paytm, Google Pay, PhonePe, BHIM, Cred) and submit your 12-digit UTR transaction number.',
+        admin_username: settings.admin_username || 'admin'
+      }
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: 'Failed to load payment settings' });
+  }
+});
+
+router.post('/payment-settings', (req, res) => {
+  try {
+    const { upi_id, merchant_name, qr_url, payment_instructions } = req.body;
+
+    const upsert = db.prepare(`
+      INSERT INTO site_settings (key, value, updated_at)
+      VALUES (?, ?, CURRENT_TIMESTAMP)
+      ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP
+    `);
+
+    if (upi_id !== undefined) upsert.run('upi_id', upi_id.trim());
+    if (merchant_name !== undefined) upsert.run('merchant_name', merchant_name.trim());
+    if (qr_url !== undefined) upsert.run('qr_url', qr_url.trim());
+    if (payment_instructions !== undefined) upsert.run('payment_instructions', payment_instructions.trim());
+
+    return res.json({
+      success: true,
+      message: '✅ Payment settings updated successfully! New UPI ID & QR Code are now live across all checkout pages.'
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: 'Failed to save payment settings' });
+  }
+});
+
+// 5. Service / API Management
+router.get('/services', (req, res) => {
+  try {
+    const services = db.prepare('SELECT * FROM services ORDER BY created_at ASC').all();
+    return res.json({ success: true, services });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: 'Failed to load services' });
+  }
+});
+
+router.post('/services', (req, res) => {
+  try {
+    const { name, description, price, requests_per_day, requests_per_month, is_active } = req.body;
+    const serviceId = `srv_${uuidv4().replace(/-/g, '').slice(0, 8)}`;
+
+    db.prepare(`
+      INSERT INTO services (id, name, description, price, requests_per_day, requests_per_month, is_active)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      serviceId,
+      name.trim(),
+      description?.trim() || '',
+      parseFloat(price || 0),
+      parseInt(requests_per_day || 1000),
+      parseInt(requests_per_month || 30000),
+      is_active !== undefined ? (is_active ? 1 : 0) : 1
+    );
+
+    return res.status(201).json({ success: true, message: 'API Service added successfully', serviceId });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: 'Failed to create service' });
+  }
+});
+
+router.put('/services/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, description, price, requests_per_day, requests_per_month, is_active } = req.body;
+
+    db.prepare(`
+      UPDATE services
+      SET name = COALESCE(?, name),
+          description = COALESCE(?, description),
+          price = COALESCE(?, price),
+          requests_per_day = COALESCE(?, requests_per_day),
+          requests_per_month = COALESCE(?, requests_per_month),
+          is_active = COALESCE(?, is_active)
+      WHERE id = ?
+    `).run(
+      name,
+      description,
+      price !== undefined ? parseFloat(price) : null,
+      requests_per_day !== undefined ? parseInt(requests_per_day) : null,
+      requests_per_month !== undefined ? parseInt(requests_per_month) : null,
+      is_active !== undefined ? (is_active ? 1 : 0) : null,
+      id
+    );
+
+    return res.json({ success: true, message: 'Service updated successfully' });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: 'Failed to update service' });
+  }
+});
+
+router.delete('/services/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    db.prepare('DELETE FROM services WHERE id = ?').run(id);
+    return res.json({ success: true, message: 'Service removed successfully' });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: 'Failed to delete service' });
+  }
+});
+
+// 6. Plans Management
+router.get('/plans', (req, res) => {
+  try {
+    const plans = db.prepare('SELECT * FROM plans WHERE id != "wallet_deposit" ORDER BY price ASC').all();
+    return res.json({ success: true, plans });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: 'Failed to load plans' });
+  }
+});
+
+router.post('/plans', (req, res) => {
+  try {
+    const { name, tier, price, daily_quota, total_quota, rps_limit, features, is_popular, is_active } = req.body;
+    const planId = `plan_${uuidv4().replace(/-/g, '').slice(0, 8)}`;
+
+    db.prepare(`
+      INSERT INTO plans (id, name, tier, price, daily_quota, total_quota, rps_limit, features_json, is_popular, is_active)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      planId,
+      name.trim(),
+      tier || 'pro',
+      parseFloat(price || 0),
+      parseInt(daily_quota || 1000),
+      parseInt(total_quota || 30000),
+      parseInt(rps_limit || 15),
+      JSON.stringify(features || []),
+      is_popular ? 1 : 0,
+      is_active !== undefined ? (is_active ? 1 : 0) : 1
+    );
+
+    return res.status(201).json({ success: true, message: 'Plan created successfully', planId });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: 'Failed to create plan' });
+  }
+});
+
+router.put('/plans/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, price, daily_quota, total_quota, rps_limit, features, is_popular, is_active } = req.body;
+
+    db.prepare(`
+      UPDATE plans
+      SET name = COALESCE(?, name),
+          price = COALESCE(?, price),
+          daily_quota = COALESCE(?, daily_quota),
+          total_quota = COALESCE(?, total_quota),
+          rps_limit = COALESCE(?, rps_limit),
+          features_json = COALESCE(?, features_json),
+          is_popular = COALESCE(?, is_popular),
+          is_active = COALESCE(?, is_active)
+      WHERE id = ?
+    `).run(
+      name,
+      price !== undefined ? parseFloat(price) : null,
+      daily_quota !== undefined ? parseInt(daily_quota) : null,
+      total_quota !== undefined ? parseInt(total_quota) : null,
+      rps_limit !== undefined ? parseInt(rps_limit) : null,
+      features ? JSON.stringify(features) : null,
+      is_popular !== undefined ? (is_popular ? 1 : 0) : null,
+      is_active !== undefined ? (is_active ? 1 : 0) : null,
+      id
+    );
+
+    return res.json({ success: true, message: 'Plan updated successfully' });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: 'Failed to update plan' });
+  }
+});
+
+router.delete('/plans/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    if (id === 'plan_free' || id === 'wallet_deposit') {
+      return res.status(400).json({ success: false, error: 'Cannot delete core system plans' });
+    }
+    db.prepare('DELETE FROM plans WHERE id = ?').run(id);
+    return res.json({ success: true, message: 'Plan deleted successfully' });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: 'Failed to delete plan' });
+  }
+});
+
+// 7. Orders & Payment Management
 router.get('/orders', (req, res) => {
   try {
     const orders = db.prepare(`
@@ -182,7 +451,7 @@ router.get('/orders', (req, res) => {
   }
 });
 
-// Approve Manual UTR Payment & Automatically Provision Key
+// Approve Manual UTR Payment & Automatically Provision Key with 30 Days Validity
 router.post('/orders/:id/approve', (req, res) => {
   try {
     const { id } = req.params;
@@ -217,29 +486,31 @@ router.post('/orders/:id/approve', (req, res) => {
       });
     }
 
-    // 2. Generate and provision high-quota API Key
+    // 2. Generate and provision 30-day paid subscription API Key
     const apiKey = generateApiKeyForPlan(order.plan_tier || order.plan_name);
     const clientToken = generateClientToken();
     const keyId = `key_${uuidv4().replace(/-/g, '').slice(0, 10)}`;
 
+    const purchaseDate = new Date();
     const expires = new Date();
-    expires.setDate(expires.getDate() + (order.billing_period === 'yearly' ? 365 : 30));
+    expires.setDate(expires.getDate() + 30);
 
     db.prepare(`
       INSERT INTO api_keys (
-        id, user_id, plan_id, key_name, api_key, client_token, status,
-        daily_quota, total_quota, rps_limit, bot_type, expires_at
-      ) VALUES (?, ?, ?, ?, ?, ?, 'active', ?, ?, ?, 'Telegram Music Bot (Dedicated)', ?)
+        id, user_id, plan_id, key_name, api_key, client_token, status, type,
+        daily_quota, total_quota, rps_limit, bot_type, purchase_date, expires_at, regeneration_count
+      ) VALUES (?, ?, ?, ?, ?, ?, 'active', 'paid', ?, ?, ?, 'Telegram Music Bot (Dedicated)', ?, ?, 0)
     `).run(
       keyId,
       order.user_id,
       order.plan_id,
-      `${order.plan_name} Key (Approved)`,
+      `${order.plan_name} 30-Day Subscription Key`,
       apiKey,
       clientToken,
-      order.daily_quota,
-      order.total_quota,
-      order.rps_limit,
+      order.daily_quota || 1500,
+      order.total_quota || 45000,
+      order.rps_limit || 20,
+      purchaseDate.toISOString(),
       expires.toISOString()
     );
 
@@ -247,7 +518,7 @@ router.post('/orders/:id/approve', (req, res) => {
 
     return res.json({
       success: true,
-      message: `Order approved successfully! API Key [${apiKey}] provisioned for ${order.user_email}.`,
+      message: `🎉 Order approved! 30-Day Paid Subscription & API Key [${apiKey}] activated for ${order.user_email} (Expires: ${expires.toLocaleDateString()}).`,
       apiKey: createdKey
     });
   } catch (error) {
@@ -256,93 +527,60 @@ router.post('/orders/:id/approve', (req, res) => {
   }
 });
 
-// Reject Manual UTR Payment
 router.post('/orders/:id/reject', (req, res) => {
   try {
     const { id } = req.params;
     const { reason } = req.body;
 
     const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(id);
-    if (!order) {
-      return res.status(404).json({ success: false, error: 'Order not found' });
-    }
+    if (!order) return res.status(404).json({ success: false, error: 'Order not found' });
 
     db.prepare("UPDATE orders SET payment_status = 'rejected' WHERE id = ?").run(id);
 
     return res.json({
       success: true,
-      message: `Order rejected. Reason: ${reason || 'Invalid UTR / Payment not received.'}`
+      message: `Order rejected. Reason: ${reason || 'Invalid UTR / Payment not verified.'}`
     });
   } catch (error) {
     return res.status(500).json({ success: false, error: 'Failed to reject order' });
   }
 });
 
-// Plans Management (Create & Edit)
-router.post('/plans', (req, res) => {
+// 8. Admin Settings / Change Password
+router.post('/change-password', (req, res) => {
   try {
-    const { name, tier, price, daily_quota, total_quota, rps_limit, concurrency, features, is_popular } = req.body;
-    const planId = `plan_${uuidv4().replace(/-/g, '').slice(0, 8)}`;
+    const { currentPassword, newPassword, newUsername } = req.body;
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ success: false, error: 'New password must be at least 6 characters long.' });
+    }
 
-    db.prepare(`
-      INSERT INTO plans (id, name, tier, price, daily_quota, total_quota, rps_limit, concurrency, features_json, is_popular)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
-      planId,
-      name,
-      tier || 'pro',
-      parseFloat(price),
-      parseInt(daily_quota),
-      parseInt(total_quota),
-      parseInt(rps_limit || 15),
-      parseInt(concurrency || 5),
-      JSON.stringify(features || []),
-      is_popular ? 1 : 0
-    );
+    const admin = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
+    if (!admin) return res.status(404).json({ success: false, error: 'Admin account not found' });
 
-    return res.status(201).json({ success: true, message: 'Plan created successfully', planId });
+    if (currentPassword && admin.password_hash) {
+      if (!bcrypt.compareSync(currentPassword, admin.password_hash)) {
+        return res.status(401).json({ success: false, error: 'Current password does not match.' });
+      }
+    }
+
+    const newHash = bcrypt.hashSync(newPassword, 10);
+    db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(newHash, req.user.id);
+
+    if (newUsername) {
+      db.prepare(`
+        INSERT INTO site_settings (key, value, updated_at)
+        VALUES ('admin_username', ?, CURRENT_TIMESTAMP)
+        ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP
+      `).run(newUsername.trim());
+    }
+
+    return res.json({ success: true, message: '🔒 Admin credentials updated securely!' });
   } catch (error) {
-    return res.status(500).json({ success: false, error: 'Failed to create plan' });
+    return res.status(500).json({ success: false, error: 'Failed to update credentials' });
   }
 });
 
-router.put('/plans/:id', (req, res) => {
-  try {
-    const { id } = req.params;
-    const { name, price, daily_quota, total_quota, rps_limit, concurrency, features, is_popular, is_active } = req.body;
-
-    db.prepare(`
-      UPDATE plans
-      SET name = COALESCE(?, name),
-          price = COALESCE(?, price),
-          daily_quota = COALESCE(?, daily_quota),
-          total_quota = COALESCE(?, total_quota),
-          rps_limit = COALESCE(?, rps_limit),
-          concurrency = COALESCE(?, concurrency),
-          features_json = COALESCE(?, features_json),
-          is_popular = COALESCE(?, is_popular),
-          is_active = COALESCE(?, is_active)
-      WHERE id = ?
-    `).run(
-      name,
-      price !== undefined ? parseFloat(price) : null,
-      daily_quota !== undefined ? parseInt(daily_quota) : null,
-      total_quota !== undefined ? parseInt(total_quota) : null,
-      rps_limit !== undefined ? parseInt(rps_limit) : null,
-      concurrency !== undefined ? parseInt(concurrency) : null,
-      features ? JSON.stringify(features) : null,
-      is_popular !== undefined ? (is_popular ? 1 : 0) : null,
-      is_active !== undefined ? (is_active ? 1 : 0) : null,
-      id
-    );
-
-    return res.json({ success: true, message: 'Plan updated successfully' });
-  } catch (error) {
-    return res.status(500).json({ success: false, error: 'Failed to update plan' });
-  }
-});
-
-// System Query Logs
+// 9. System Logs
 router.get('/logs', (req, res) => {
   try {
     const limit = parseInt(req.query.limit || '100');

@@ -18,7 +18,9 @@ import {
   Bot, 
   Globe, 
   Activity,
-  AlertCircle
+  AlertCircle,
+  Calendar,
+  Zap
 } from 'lucide-react';
 
 export default function MyKeys() {

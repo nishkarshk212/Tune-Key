@@ -18,8 +18,8 @@ router.get('/overview', (req, res) => {
     let totalApiRequests = 0, todayRequests = 0;
     let recentOrders = [], recentLogs = [];
 
-    try { totalUsers = db.prepare('SELECT COUNT(*) as count FROM users WHERE role != "admin"').get()?.count || 0; } catch(e){}
-    try { activeUsers = db.prepare('SELECT COUNT(*) as count FROM users WHERE role != "admin" AND is_banned = 0').get()?.count || 0; } catch(e){}
+    try { totalUsers = db.prepare("SELECT COUNT(*) as count FROM users WHERE role != 'admin'").get()?.count || 0; } catch(e){}
+    try { activeUsers = db.prepare("SELECT COUNT(*) as count FROM users WHERE role != 'admin' AND is_banned = 0").get()?.count || 0; } catch(e){}
     try { totalKeys = db.prepare('SELECT COUNT(*) as count FROM api_keys').get()?.count || 0; } catch(e){}
     try { activeKeys = db.prepare("SELECT COUNT(*) as count FROM api_keys WHERE status = 'active'").get()?.count || 0; } catch(e){}
     try { pendingPayments = db.prepare("SELECT COUNT(*) as count FROM orders WHERE payment_status = 'pending_verification'").get()?.count || 0; } catch(e){}
@@ -358,7 +358,7 @@ router.delete('/services/:id', (req, res) => {
 // 6. Plans Management
 router.get('/plans', (req, res) => {
   try {
-    const plans = db.prepare('SELECT * FROM plans WHERE id != "wallet_deposit" ORDER BY price ASC').all();
+    const plans = db.prepare("SELECT * FROM plans WHERE id != 'wallet_deposit' ORDER BY price ASC").all();
     return res.json({ success: true, plans });
   } catch (error) {
     console.error('Admin plans error:', error);

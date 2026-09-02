@@ -13,37 +13,42 @@ router.use(authenticateToken, requireAdmin);
 // 1. Overview Dashboard Statistics (7 KPI Cards)
 router.get('/overview', (req, res) => {
   try {
-    const totalUsers = db.prepare('SELECT COUNT(*) as count FROM users WHERE role != "admin"').get()?.count || 0;
-    const activeUsers = db.prepare('SELECT COUNT(*) as count FROM users WHERE role != "admin" AND is_banned = 0').get()?.count || 0;
-    const totalKeys = db.prepare('SELECT COUNT(*) as count FROM api_keys').get()?.count || 0;
-    const activeKeys = db.prepare("SELECT COUNT(*) as count FROM api_keys WHERE status = 'active'").get()?.count || 0;
-    
-    const pendingPayments = db.prepare("SELECT COUNT(*) as count FROM orders WHERE payment_status = 'pending_verification'").get()?.count || 0;
-    const approvedPayments = db.prepare("SELECT COUNT(*) as count FROM orders WHERE payment_status = 'completed'").get()?.count || 0;
-    
-    const revenueResult = db.prepare("SELECT SUM(amount) as total FROM orders WHERE payment_status = 'completed'").get();
-    const totalRevenue = revenueResult?.total || 0;
+    let totalUsers = 0, activeUsers = 0, totalKeys = 0, activeKeys = 0;
+    let pendingPayments = 0, approvedPayments = 0, totalRevenue = 0;
+    let totalApiRequests = 0, todayRequests = 0;
+    let recentOrders = [], recentLogs = [];
 
-    const totalApiRequests = db.prepare('SELECT COUNT(*) as count FROM usage_logs').get()?.count || 0;
-    const todayRequests = db.prepare('SELECT SUM(today_requests) as sum FROM api_keys').get()?.sum || 0;
+    try { totalUsers = db.prepare('SELECT COUNT(*) as count FROM users WHERE role != "admin"').get()?.count || 0; } catch(e){}
+    try { activeUsers = db.prepare('SELECT COUNT(*) as count FROM users WHERE role != "admin" AND is_banned = 0').get()?.count || 0; } catch(e){}
+    try { totalKeys = db.prepare('SELECT COUNT(*) as count FROM api_keys').get()?.count || 0; } catch(e){}
+    try { activeKeys = db.prepare("SELECT COUNT(*) as count FROM api_keys WHERE status = 'active'").get()?.count || 0; } catch(e){}
+    try { pendingPayments = db.prepare("SELECT COUNT(*) as count FROM orders WHERE payment_status = 'pending_verification'").get()?.count || 0; } catch(e){}
+    try { approvedPayments = db.prepare("SELECT COUNT(*) as count FROM orders WHERE payment_status = 'completed'").get()?.count || 0; } catch(e){}
+    try { totalRevenue = db.prepare("SELECT SUM(amount) as total FROM orders WHERE payment_status = 'completed'").get()?.total || 0; } catch(e){}
+    try { totalApiRequests = db.prepare('SELECT COUNT(*) as count FROM usage_logs').get()?.count || 0; } catch(e){}
+    try { todayRequests = db.prepare('SELECT SUM(today_requests) as sum FROM api_keys').get()?.sum || 0; } catch(e){}
 
-    // Recent orders
-    const recentOrders = db.prepare(`
-      SELECT o.*, u.email as user_email, u.name as user_name, COALESCE(p.name, 'Wallet Top-Up') as plan_name
-      FROM orders o
-      LEFT JOIN users u ON o.user_id = u.id
-      LEFT JOIN plans p ON o.plan_id = p.id
-      ORDER BY o.created_at DESC LIMIT 10
-    `).all();
+    try {
+      recentOrders = db.prepare(`
+        SELECT o.*, u.email as user_email, u.name as user_name
+        FROM orders o
+        LEFT JOIN users u ON o.user_id = u.id
+        ORDER BY o.created_at DESC LIMIT 10
+      `).all();
+    } catch(e) {
+      console.error('Recent orders query error:', e.message);
+    }
 
-    // Recent system logs
-    const recentLogs = db.prepare(`
-      SELECT l.*, u.email as user_email, k.key_name
-      FROM usage_logs l
-      LEFT JOIN users u ON l.user_id = u.id
-      LEFT JOIN api_keys k ON l.key_id = k.id
-      ORDER BY l.timestamp DESC LIMIT 15
-    `).all();
+    try {
+      recentLogs = db.prepare(`
+        SELECT l.*, u.email as user_email
+        FROM usage_logs l
+        LEFT JOIN users u ON l.user_id = u.id
+        ORDER BY l.timestamp DESC LIMIT 15
+      `).all();
+    } catch(e) {
+      console.error('Recent logs query error:', e.message);
+    }
 
     return res.json({
       success: true,
@@ -64,8 +69,8 @@ router.get('/overview', (req, res) => {
       recentLogs
     });
   } catch (error) {
-    console.error('Admin overview error:', error);
-    return res.status(500).json({ success: false, error: 'Failed to fetch admin overview' });
+    console.error('Admin overview fatal error:', error);
+    return res.status(500).json({ success: false, error: error.message || 'Failed to fetch admin overview' });
   }
 });
 

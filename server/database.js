@@ -98,6 +98,14 @@ export function initDatabase() {
   try { db.exec("ALTER TABLE api_keys ADD COLUMN purchase_date DATETIME;"); } catch(e){}
   try { db.exec("ALTER TABLE api_keys ADD COLUMN regeneration_count INTEGER DEFAULT 0;"); } catch(e){}
 
+  // Plans safety migrations
+  try { db.exec("ALTER TABLE plans ADD COLUMN is_popular INTEGER DEFAULT 0;"); } catch(e){}
+  try { db.exec("ALTER TABLE plans ADD COLUMN is_active INTEGER DEFAULT 1;"); } catch(e){}
+  try { db.exec("ALTER TABLE plans ADD COLUMN features_json TEXT;"); } catch(e){}
+  try { db.exec("ALTER TABLE plans ADD COLUMN rps_limit INTEGER DEFAULT 15;"); } catch(e){}
+  try { db.exec("ALTER TABLE plans ADD COLUMN daily_quota INTEGER DEFAULT 1500;"); } catch(e){}
+  try { db.exec("ALTER TABLE plans ADD COLUMN total_quota INTEGER DEFAULT 45000;"); } catch(e){}
+
   // 4. Usage Logs Table
   db.exec(`
     CREATE TABLE IF NOT EXISTS usage_logs (

@@ -361,7 +361,8 @@ router.get('/plans', (req, res) => {
     const plans = db.prepare('SELECT * FROM plans WHERE id != "wallet_deposit" ORDER BY price ASC').all();
     return res.json({ success: true, plans });
   } catch (error) {
-    return res.status(500).json({ success: false, error: 'Failed to load plans' });
+    console.error('Admin plans error:', error);
+    return res.status(500).json({ success: false, error: error.message || 'Failed to load plans' });
   }
 });
 

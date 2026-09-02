@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../utils/api';
 import Modal from '../../components/Modal';
 import { 
   Key, 
@@ -33,7 +33,7 @@ export default function KeyManagement() {
   const fetchKeys = async () => {
     try {
       setLoading(true);
-      const res = await axios.get('/api/admin/keys');
+      const res = await api.get('/admin/keys');
       setKeys(res.data.keys || []);
     } catch (err) {
       showNotification('Failed to fetch keys', 'error');
@@ -60,7 +60,7 @@ export default function KeyManagement() {
   const handleToggle = async (k) => {
     try {
       const nextStatus = k.status === 'active' ? 'inactive' : 'active';
-      const res = await axios.put(`/api/admin/keys/${k.id}`, { status: nextStatus });
+      const res = await api.put(`/admin/keys/${k.id}`, { status: nextStatus });
       showNotification(res.data.message || `Key is now ${nextStatus}`);
       fetchKeys();
     } catch (err) {
@@ -71,7 +71,7 @@ export default function KeyManagement() {
   const handleRevoke = async (k) => {
     if (!window.confirm(`Permanently revoke ${k.key_name}? This key will stop working immediately.`)) return;
     try {
-      const res = await axios.put(`/api/admin/keys/${k.id}`, { status: 'revoked' });
+      const res = await api.put(`/admin/keys/${k.id}`, { status: 'revoked' });
       showNotification('API Key has been permanently revoked');
       fetchKeys();
     } catch (err) {
@@ -82,7 +82,7 @@ export default function KeyManagement() {
   const handleRegenerate = async (k) => {
     if (!window.confirm(`Regenerate API credentials for ${k.user_email}? The 30-day expiration date will be preserved.`)) return;
     try {
-      const res = await axios.post(`/api/admin/keys/${k.id}/regenerate`);
+      const res = await api.post(`/admin/keys/${k.id}/regenerate`);
       showNotification(res.data.message || 'Key regenerated successfully');
       fetchKeys();
     } catch (err) {
@@ -92,7 +92,7 @@ export default function KeyManagement() {
 
   const handleExtend = async (k) => {
     try {
-      const res = await axios.post(`/api/admin/keys/${k.id}/extend`, { days: 30 });
+      const res = await api.post(`/admin/keys/${k.id}/extend`, { days: 30 });
       showNotification(res.data.message || 'Subscription extended by 30 days');
       fetchKeys();
     } catch (err) {
@@ -104,7 +104,7 @@ export default function KeyManagement() {
     e.preventDefault();
     if (!selectedKey) return;
     try {
-      const res = await axios.put(`/api/admin/keys/${selectedKey.id}`, {
+      const res = await api.put(`/admin/keys/${selectedKey.id}`, {
         daily_quota: parseInt(dailyQuota),
         total_quota: parseInt(totalQuota),
         rps_limit: parseInt(rpsLimit)

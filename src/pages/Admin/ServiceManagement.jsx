@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../utils/api';
 import { 
   Server, 
   Plus, 
@@ -41,7 +41,7 @@ export default function ServiceManagement() {
     setLoading(true);
     setError(null);
     try {
-      const res = await axios.get('/api/admin/services');
+      const res = await api.get('/admin/services');
       if (res.data?.success) {
         setServices(res.data.services || []);
       }
@@ -87,12 +87,12 @@ export default function ServiceManagement() {
 
     try {
       if (isEditing) {
-        const res = await axios.put(`/api/admin/services/${currentId}`, formData);
+        const res = await api.put(`/admin/services/${currentId}`, formData);
         if (res.data?.success) {
           setMessage('Service updated successfully');
         }
       } else {
-        const res = await axios.post('/api/admin/services', formData);
+        const res = await api.post('/admin/services', formData);
         if (res.data?.success) {
           setMessage('New service created successfully');
         }
@@ -107,7 +107,7 @@ export default function ServiceManagement() {
   const handleDelete = async (id, name) => {
     if (!window.confirm(`Are you sure you want to delete service "${name}"?`)) return;
     try {
-      await axios.delete(`/api/admin/services/${id}`);
+      await api.delete(`/admin/services/${id}`);
       setMessage('Service removed successfully');
       fetchServices();
     } catch (err) {
@@ -117,7 +117,7 @@ export default function ServiceManagement() {
 
   const handleToggleStatus = async (srv) => {
     try {
-      await axios.put(`/api/admin/services/${srv.id}`, {
+      await api.put(`/admin/services/${srv.id}`, {
         is_active: srv.is_active ? 0 : 1
       });
       fetchServices();

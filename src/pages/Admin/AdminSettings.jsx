@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../utils/api';
 import { 
   ShieldCheck, 
   Key, 
@@ -26,7 +26,7 @@ export default function AdminSettings() {
 
   const fetchAdminUsername = async () => {
     try {
-      const res = await axios.get('/api/admin/payment-settings');
+      const res = await api.get('/admin/payment-settings');
       if (res.data?.settings?.admin_username) {
         setUsername(res.data.settings.admin_username);
       }
@@ -48,7 +48,7 @@ export default function AdminSettings() {
 
     setLoading(true);
     try {
-      const res = await axios.post('/api/admin/change-password', {
+      const res = await api.post('/admin/change-password', {
         newUsername: username.trim(),
         currentPassword,
         newPassword

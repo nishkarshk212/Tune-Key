@@ -60,6 +60,23 @@ export function AuthProvider({ children }) {
     throw new Error(res.data.error || 'Login failed');
   };
 
+  const adminLogin = async (username, password) => {
+    const res = await api.post('/auth/admin-login', { username, password });
+    if (res.data.success) {
+      localStorage.setItem('tunekey_token', res.data.token);
+      localStorage.setItem('tunekey_user', JSON.stringify(res.data.user));
+      setUser(res.data.user);
+      return res.data;
+    }
+    throw new Error(res.data.error || 'Admin login failed');
+  };
+
+  const setAuthData = (token, userData) => {
+    localStorage.setItem('tunekey_token', token);
+    localStorage.setItem('tunekey_user', JSON.stringify(userData));
+    setUser(userData);
+  };
+
   const loginWithGoogle = async (googleData) => {
     const res = await api.post('/auth/google', googleData);
     if (res.data.success) {
@@ -110,6 +127,8 @@ export function AuthProvider({ children }) {
       user,
       loading,
       login,
+      adminLogin,
+      setAuthData,
       loginWithGoogle,
       register,
       logout,

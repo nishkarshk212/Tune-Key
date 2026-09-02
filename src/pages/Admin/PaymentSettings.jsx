@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../utils/api';
 import { 
   CreditCard, 
   QrCode, 
@@ -30,7 +30,7 @@ export default function PaymentSettings() {
     setLoading(true);
     setError(null);
     try {
-      const res = await axios.get('/api/admin/payment-settings');
+      const res = await api.get('/admin/payment-settings');
       if (res.data?.success && res.data?.settings) {
         setUpiId(res.data.settings.upi_id || 'mohammadhakeeb@fam');
         setMerchantName(res.data.settings.merchant_name || 'Mohammed Hakeeb');
@@ -51,7 +51,7 @@ export default function PaymentSettings() {
     setError(null);
 
     try {
-      const res = await axios.post('/api/admin/payment-settings', {
+      const res = await api.post('/admin/payment-settings', {
         upi_id: upiId.trim(),
         merchant_name: merchantName.trim(),
         qr_url: qrUrl.trim(),

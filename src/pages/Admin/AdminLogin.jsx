@@ -9,7 +9,7 @@ export default function AdminLogin() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const { login } = useAuth();
+  const { adminLogin } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -18,19 +18,10 @@ export default function AdminLogin() {
     setLoading(true);
 
     try {
-      const res = await axios.post('/api/auth/admin-login', {
-        username: username.trim(),
-        password: password
-      });
-
-      if (res.data?.success && res.data?.token) {
-        login(res.data.token, res.data.user);
-        navigate('/admin');
-      } else {
-        setError(res.data?.error || 'Authentication failed. Administrator credentials required.');
-      }
+      await adminLogin(username.trim(), password);
+      navigate('/admin');
     } catch (err) {
-      setError(err.response?.data?.error || 'Invalid admin username or password. Default: admin / admin123');
+      setError(err.response?.data?.error || err.message || 'Invalid admin username or password. Default: admin / admin123');
     } finally {
       setLoading(false);
     }

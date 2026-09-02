@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../utils/api';
 import { 
   Layers, 
   Plus, 
@@ -42,7 +42,7 @@ export default function PlanManagement() {
     setLoading(true);
     setError(null);
     try {
-      const res = await axios.get('/api/admin/plans');
+      const res = await api.get('/admin/plans');
       if (res.data?.success) {
         setPlans(res.data.plans || []);
       }
@@ -99,10 +99,10 @@ export default function PlanManagement() {
 
     try {
       if (isEditing) {
-        const res = await axios.put(`/api/admin/plans/${currentId}`, formData);
+        const res = await api.put(`/admin/plans/${currentId}`, formData);
         if (res.data?.success) setMessage('Plan updated successfully');
       } else {
-        const res = await axios.post('/api/admin/plans', formData);
+        const res = await api.post('/admin/plans', formData);
         if (res.data?.success) setMessage('Plan created successfully');
       }
       setModalOpen(false);
@@ -115,7 +115,7 @@ export default function PlanManagement() {
   const handleDelete = async (id, name) => {
     if (!window.confirm(`Are you sure you want to delete plan "${name}"?`)) return;
     try {
-      await axios.delete(`/api/admin/plans/${id}`);
+      await api.delete(`/admin/plans/${id}`);
       setMessage('Plan deleted successfully');
       fetchPlans();
     } catch (err) {

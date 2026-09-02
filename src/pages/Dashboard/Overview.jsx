@@ -78,6 +78,10 @@ export default function Overview() {
 
   useEffect(() => {
     fetchStats();
+    const timer = setInterval(() => {
+      fetchStats();
+    }, 8000);
+    return () => clearInterval(timer);
   }, []);
 
   const handleCopy = (text, id) => {

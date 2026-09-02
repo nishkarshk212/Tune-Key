@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import api from '../../utils/api';
 import Modal from '../../components/Modal';
 import { 
   LayoutDashboard, 
@@ -23,11 +24,14 @@ import {
   ChevronDown,
   User,
   AlertTriangle,
-  Wallet
+  Wallet,
+  Sparkles,
+  CheckCircle2,
+  AlertCircle
 } from 'lucide-react';
 
 export default function DashboardLayout() {
-  const { user, isAdmin, logout } = useAuth();
+  const { user, isAdmin, logout, refreshUser } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
@@ -35,38 +39,64 @@ export default function DashboardLayout() {
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      title: 'YouTube Streaming Gateway Online',
-      message: 'Active endpoint: https://vbit-api-store.vercel.app/api/v1/yt. Direct Opus 160kbps audio enabled.',
-      time: 'Just now',
-      unread: true,
-    },
-    {
-      id: 2,
-      title: 'Daily Quota Reset System',
-      message: 'Your key quotas automatically reset daily at 00:00 UTC with real-time telemetry.',
-      time: '1 hour ago',
-      unread: true,
-    },
-    {
-      id: 3,
-      title: '24/7 Telegram Support Channel',
-      message: 'Join @VAMPIREUPDATES for real-time bot maintenance updates and live support.',
-      time: '1 day ago',
-      unread: false,
-    },
-  ]);
+  const [notifications, setNotifications] = useState([]);
+  const [liveToast, setLiveToast] = useState(null);
+  const knownIdsRef = useRef(new Set());
+  const initialLoadRef = useRef(true);
 
-  const hasUnread = notifications.some(n => n.unread);
+  const fetchNotifications = async () => {
+    try {
+      const res = await api.get('/user/notifications');
+      if (res.data.success) {
+        const notifs = res.data.notifications || [];
+        setNotifications(notifs);
 
-  const markAllAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, unread: false })));
+        // Check if there are newly arrived unread notifications
+        if (!initialLoadRef.current) {
+          const newItems = notifs.filter(n => !n.is_read && !knownIdsRef.current.has(n.id));
+          if (newItems.length > 0) {
+            const latest = newItems[0];
+            setLiveToast(latest);
+            refreshUser();
+            setTimeout(() => setLiveToast(null), 6000);
+          }
+        }
+
+        notifs.forEach(n => knownIdsRef.current.add(n.id));
+        initialLoadRef.current = false;
+      }
+    } catch (e) {
+      // Background fetch silently fallback
+    }
   };
 
-  const clearAllNotifications = () => {
-    setNotifications([]);
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(() => {
+      fetchNotifications();
+      refreshUser();
+    }, 7000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const hasUnread = notifications.some(n => !n.is_read);
+
+  const markAllAsRead = async () => {
+    try {
+      await api.post('/user/notifications/mark-read');
+      setNotifications(prev => prev.map(n => ({ ...n, is_read: 1 })));
+    } catch (e) {
+      setNotifications(prev => prev.map(n => ({ ...n, is_read: 1 })));
+    }
+  };
+
+  const clearAllNotifications = async () => {
+    try {
+      await api.delete('/user/notifications/clear');
+      setNotifications([]);
+    } catch (e) {
+      setNotifications([]);
+    }
   };
 
   const isCurrent = (path) => {
@@ -172,6 +202,38 @@ export default function DashboardLayout() {
           </button>
         </div>
       </aside>
+
+      {/* Live Toast Banner for Real-Time Admin Updates */}
+      {liveToast && (
+        <div className="fixed top-5 right-5 z-50 max-w-sm w-full animate-bounceIn shadow-2xl">
+          <div className="p-4 rounded-2xl bg-[#0F121E] border border-purple-500/50 text-white backdrop-blur-xl flex items-start space-x-3 shadow-purple-500/20 shadow-2xl ring-1 ring-purple-500/30">
+            <div className="w-8 h-8 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center flex-shrink-0">
+              <Sparkles className="w-4 h-4" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-bold text-white">{liveToast.title}</p>
+                <button
+                  onClick={() => setLiveToast(null)}
+                  className="text-slate-400 hover:text-white p-0.5 cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              <p className="text-[11px] text-slate-300 mt-1 leading-relaxed break-words">{liveToast.message}</p>
+              {liveToast.link && (
+                <Link
+                  to={liveToast.link}
+                  onClick={() => setLiveToast(null)}
+                  className="inline-block mt-2 text-[10px] font-bold text-purple-400 hover:text-purple-300 transition-colors"
+                >
+                  Open Page →
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* MAIN CONTENT WRAPPER */}
       <div className="flex-1 flex flex-col min-h-screen overflow-x-hidden">

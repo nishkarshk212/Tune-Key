@@ -57,6 +57,10 @@ export default function Wallet() {
 
   useEffect(() => {
     fetchWallet();
+    const timer = setInterval(() => {
+      fetchWallet();
+    }, 8000);
+    return () => clearInterval(timer);
   }, []);
 
   const showNotification = (message, type = 'success') => {

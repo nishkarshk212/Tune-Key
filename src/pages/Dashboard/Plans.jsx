@@ -56,6 +56,10 @@ export default function Plans() {
 
   useEffect(() => {
     fetchPlans();
+    const timer = setInterval(() => {
+      fetchPlans();
+    }, 10000);
+    return () => clearInterval(timer);
   }, []);
 
   useEffect(() => {

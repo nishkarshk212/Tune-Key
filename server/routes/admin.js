@@ -1,7 +1,7 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
-import db from '../database.js';
+import db, { createNotification } from '../database.js';
 import { authenticateToken, requireAdmin } from '../middleware/auth.js';
 import { generateApiKeyForPlan, generateApiKey, generateClientToken } from '../services/keyService.js';
 
@@ -142,6 +142,7 @@ router.patch('/users/:id/balance', (req, res) => {
     }
 
     db.prepare('UPDATE users SET balance = ? WHERE id = ?').run(parseFloat(balance), id);
+    createNotification(id, '💰 Balance Updated', `Your wallet balance was updated to ₹${balance} by administrator.`, 'info', '/dashboard/wallet');
     return res.json({ success: true, message: 'User balance updated successfully' });
   } catch (error) {
     return res.status(500).json({ success: false, error: 'Failed to update balance' });
@@ -224,6 +225,7 @@ router.post('/keys/:id/extend', (req, res) => {
     baseDate.setDate(baseDate.getDate() + parseInt(days));
 
     db.prepare("UPDATE api_keys SET expires_at = ?, status = 'active' WHERE id = ?").run(baseDate.toISOString(), id);
+    createNotification(key.user_id, '🔑 Key Subscription Extended', `Your API Key (${key.key_name}) was extended by ${days} days until ${baseDate.toLocaleDateString()}.`, 'success', '/dashboard/keys');
 
     return res.json({
       success: true,
@@ -271,6 +273,8 @@ router.post('/payment-settings', (req, res) => {
     if (merchant_name !== undefined) upsert.run('merchant_name', merchant_name.trim());
     if (qr_url !== undefined) upsert.run('qr_url', qr_url.trim());
     if (payment_instructions !== undefined) upsert.run('payment_instructions', payment_instructions.trim());
+
+    createNotification(null, '💳 Payment Settings Updated', `Merchant UPI ID (${upi_id || 'mohammadhakeeb@fam'}) & QR code updated.`, 'info', '/dashboard/wallet');
 
     return res.json({
       success: true,
@@ -486,6 +490,7 @@ router.post('/orders/:id/approve', (req, res) => {
     // If this is a wallet deposit, credit user balance
     if (!order.plan_id || order.plan_id === 'wallet_deposit') {
       db.prepare("UPDATE users SET balance = balance + ? WHERE id = ?").run(order.amount, order.user_id);
+      createNotification(order.user_id, '🎉 Deposit Approved!', `Your wallet deposit of ₹${order.amount} has been approved and added to your balance.`, 'success', '/dashboard/wallet');
       return res.json({
         success: true,
         message: `Wallet deposit of ₹${order.amount} approved and credited to ${order.user_email}!`
@@ -521,6 +526,7 @@ router.post('/orders/:id/approve', (req, res) => {
     );
 
     const createdKey = db.prepare('SELECT * FROM api_keys WHERE id = ?').get(keyId);
+    createNotification(order.user_id, '🚀 Subscription Activated!', `Your ${order.plan_name} API Key [${apiKey.slice(0, 10)}••••••••] is active for 30 days.`, 'success', '/dashboard/keys');
 
     return res.json({
       success: true,
@@ -542,6 +548,7 @@ router.post('/orders/:id/reject', (req, res) => {
     if (!order) return res.status(404).json({ success: false, error: 'Order not found' });
 
     db.prepare("UPDATE orders SET payment_status = 'rejected' WHERE id = ?").run(id);
+    createNotification(order.user_id, '❌ Payment Verification Rejected', `Order #${id.slice(0,8)} was rejected: ${reason || 'Invalid UTR reference / Payment not received'}.`, 'warning', '/dashboard/wallet');
 
     return res.json({
       success: true,

@@ -64,6 +64,10 @@ export default function MyKeys() {
       setCreatedNewKey(null);
       setIsCreateModalOpen(true);
     }
+    const timer = setInterval(() => {
+      fetchKeys();
+    }, 8000);
+    return () => clearInterval(timer);
   }, [searchParams]);
 
   const showNotification = (message, type = 'success') => {

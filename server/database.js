@@ -177,7 +177,35 @@ export function initDatabase() {
     );
   `);
 
+  // 9. User Notifications & Broadcasts Table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS notifications (
+      id TEXT PRIMARY KEY,
+      user_id TEXT,
+      title TEXT NOT NULL,
+      message TEXT NOT NULL,
+      type TEXT DEFAULT 'info',
+      is_read INTEGER DEFAULT 0,
+      link TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
   seedData();
+}
+
+export function createNotification(userId, title, message, type = 'info', link = '') {
+  try {
+    const id = `notif_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    db.prepare(`
+      INSERT INTO notifications (id, user_id, title, message, type, is_read, link, created_at)
+      VALUES (?, ?, ?, ?, ?, 0, ?, CURRENT_TIMESTAMP)
+    `).run(id, userId || null, title, message, type, link || null);
+    return id;
+  } catch (err) {
+    console.error('Error creating notification:', err.message);
+    return null;
+  }
 }
 
 function seedData() {

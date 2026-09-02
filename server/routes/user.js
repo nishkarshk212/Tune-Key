@@ -494,4 +494,56 @@ router.post('/wallet/deposit', authenticateToken, (req, res) => {
   }
 });
 
+// ----------------------------------------------------
+// User Notifications & Real-Time Alert System
+// ----------------------------------------------------
+router.get('/notifications', authenticateToken, (req, res) => {
+  try {
+    const userId = req.user.id;
+    const notifications = db.prepare(`
+      SELECT * FROM notifications
+      WHERE user_id = ? OR user_id IS NULL
+      ORDER BY created_at DESC
+      LIMIT 30
+    `).all(userId);
+
+    const unreadCount = notifications.filter(n => !n.is_read).length;
+
+    return res.json({
+      success: true,
+      notifications,
+      unreadCount
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: 'Failed to fetch notifications' });
+  }
+});
+
+router.post('/notifications/mark-read', authenticateToken, (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { id } = req.body;
+
+    if (id) {
+      db.prepare('UPDATE notifications SET is_read = 1 WHERE id = ? AND (user_id = ? OR user_id IS NULL)').run(id, userId);
+    } else {
+      db.prepare('UPDATE notifications SET is_read = 1 WHERE user_id = ? OR user_id IS NULL').run(userId);
+    }
+
+    return res.json({ success: true, message: 'Notifications marked as read' });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: 'Failed to update notifications' });
+  }
+});
+
+router.delete('/notifications/clear', authenticateToken, (req, res) => {
+  try {
+    const userId = req.user.id;
+    db.prepare('DELETE FROM notifications WHERE user_id = ?').run(userId);
+    return res.json({ success: true, message: 'Notifications cleared' });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: 'Failed to clear notifications' });
+  }
+});
+
 export default router;

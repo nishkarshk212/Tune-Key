@@ -406,7 +406,7 @@ router.get('/wallet', authenticateToken, (req, res) => {
       totalSpent,
       transactions,
       merchantUpi: {
-        upiId: '7738221844@ptaxis',
+        upiId: 'mohammadhakeeb@fam',
         merchantName: 'Mohammed Hakeeb',
         qrUrl: '/assets/paytm_qr.jpg'
       }

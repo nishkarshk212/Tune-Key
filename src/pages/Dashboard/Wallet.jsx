@@ -333,12 +333,12 @@ export default function Wallet() {
                 <div className="min-w-0 pr-2">
                   <span className="text-[10px] text-slate-400 block">UPI ID / VPA</span>
                   <span className="font-mono font-bold text-slate-900 dark:text-white truncate block">
-                    7738221844@ptaxis
+                    mohammadhakeeb@fam
                   </span>
                 </div>
                 <button
                   type="button"
-                  onClick={() => handleCopy('7738221844@ptaxis')}
+                  onClick={() => handleCopy('mohammadhakeeb@fam')}
                   className="px-2.5 py-1.5 rounded-lg bg-purple-600/15 hover:bg-purple-600 text-purple-400 hover:text-white text-[11px] font-bold transition-all flex items-center space-x-1 flex-shrink-0 cursor-pointer"
                 >
                   {copiedUpi ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
@@ -514,7 +514,7 @@ export default function Wallet() {
           </div>
           <div>
             <p className="font-bold text-slate-900 dark:text-white text-sm">Mohammed Hakeeb</p>
-            <p className="font-mono text-purple-400 text-xs mt-1">7738221844@ptaxis</p>
+            <p className="font-mono text-purple-400 text-xs mt-1">mohammadhakeeb@fam</p>
           </div>
           <p className="text-slate-400 text-[11px]">
             Scan with any UPI app (Paytm, Google Pay, PhonePe, BHIM, Cred) and submit your 12-digit UTR transaction number.

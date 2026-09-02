@@ -3,16 +3,16 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import SignInModal from './SignInModal';
-import { 
-  Key, 
-  Sun, 
-  Moon, 
-  LogOut, 
-  User, 
-  LayoutDashboard, 
-  Menu, 
-  X, 
-  ChevronDown, 
+import {
+  Key,
+  Sun,
+  Moon,
+  LogOut,
+  User,
+  LayoutDashboard,
+  Menu,
+  X,
+  ChevronDown,
   ShieldCheck,
   Send,
   Zap,
@@ -41,7 +41,7 @@ export default function Navbar() {
       <header className="sticky top-0 z-40 w-full backdrop-blur-xl bg-white/80 dark:bg-[#08090D]/85 border-b border-slate-200 dark:border-white/[0.06] transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
-            
+
             {/* Logo & Brand: VBIT-API-STORE */}
             <Link to="/" className="flex items-center space-x-2.5 group">
               <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-tr from-indigo-500 to-purple-600 shadow-md shadow-purple-500/20 group-hover:scale-105 transition-transform">
@@ -56,9 +56,8 @@ export default function Navbar() {
             <nav className="hidden md:flex items-center space-x-8 text-sm font-medium text-slate-600 dark:text-slate-400">
               <Link
                 to="/"
-                className={`hover:text-slate-900 dark:hover:text-white transition-colors ${
-                  isCurrent('/') ? 'text-slate-900 dark:text-white font-semibold' : ''
-                }`}
+                className={`hover:text-slate-900 dark:hover:text-white transition-colors ${isCurrent('/') ? 'text-slate-900 dark:text-white font-semibold' : ''
+                  }`}
               >
                 Home
               </Link>
@@ -76,9 +75,8 @@ export default function Navbar() {
               </a>
               <Link
                 to="/docs"
-                className={`hover:text-slate-900 dark:hover:text-white transition-colors ${
-                  isCurrent('/docs') ? 'text-slate-900 dark:text-white font-semibold' : ''
-                }`}
+                className={`hover:text-slate-900 dark:hover:text-white transition-colors ${isCurrent('/docs') ? 'text-slate-900 dark:text-white font-semibold' : ''
+                  }`}
               >
                 Docs
               </Link>
@@ -100,7 +98,7 @@ export default function Navbar() {
 
             {/* Right Action Buttons */}
             <div className="flex items-center space-x-4">
-              
+
               {/* Theme Toggle Button */}
               <button
                 onClick={toggleTheme}

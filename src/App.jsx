@@ -66,12 +66,16 @@ class ErrorBoundary extends React.Component {
           </p>
           <button
             onClick={() => {
-              localStorage.clear();
-              window.location.href = '/';
+              if (window.caches) {
+                caches.keys().then((names) => {
+                  for (let name of names) caches.delete(name);
+                });
+              }
+              window.location.reload();
             }}
-            className="mt-6 px-5 py-2.5 rounded-xl btn-gradient-purple text-xs font-bold"
+            className="mt-6 px-5 py-2.5 rounded-xl btn-gradient-purple text-xs font-bold cursor-pointer"
           >
-            Reload Platform
+            Refresh & Load Latest Update
           </button>
         </div>
       );

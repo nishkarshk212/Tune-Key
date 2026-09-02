@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { ShieldCheck, Lock, User, ArrowLeft, Key, AlertCircle, CheckCircle2 } from 'lucide-react';
-import axios from 'axios';
+import { ShieldCheck, Lock, User, ArrowLeft, Key, AlertCircle } from 'lucide-react';
 
 export default function AdminLogin() {
-  const [username, setUsername] = useState('admin');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -21,7 +20,7 @@ export default function AdminLogin() {
       await adminLogin(username.trim(), password);
       navigate('/admin');
     } catch (err) {
-      setError(err.response?.data?.error || err.message || 'Invalid admin username or password. Default: admin / admin123');
+      setError(err.response?.data?.error || err.message || 'Invalid administrator username or password.');
     } finally {
       setLoading(false);
     }
@@ -67,7 +66,7 @@ export default function AdminLogin() {
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="admin"
+                  placeholder="Enter admin username or email"
                   className="w-full pl-10 pr-4 py-2.5 bg-slate-900/80 border border-white/[0.08] rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 transition-all font-mono"
                 />
                 <User className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
@@ -91,15 +90,10 @@ export default function AdminLogin() {
               </div>
             </div>
 
-            <div className="p-3 rounded-xl bg-amber-500/5 border border-amber-500/20 text-[11px] text-amber-300/80">
-              <p className="font-semibold text-amber-300">Default Credentials:</p>
-              <p className="mt-0.5 font-mono">Username: <span className="text-white">admin</span> | Password: <span className="text-white">admin123</span></p>
-            </div>
-
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-sm tracking-wide transition-all shadow-lg shadow-amber-500/20 flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50"
+              className="w-full mt-2 py-3 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-sm tracking-wide transition-all shadow-lg shadow-amber-500/20 flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50"
             >
               <Key className="w-4 h-4" />
               <span>{loading ? 'Authenticating...' : 'Access Admin Dashboard'}</span>
